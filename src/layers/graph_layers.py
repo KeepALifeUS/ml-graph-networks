@@ -26,7 +26,7 @@ from typing import Optional, Tuple, Union
 
 class TemporalGraphConv(MessagePassing):
     """
-    Temporal Graph Convolution Layer for temporal рядов crypto data
+    Temporal Graph Convolution Layer for temporal series crypto data
     
     Temporal-Aware Graph Processing
     """

@@ -53,7 +53,7 @@ class GraphSAGEConfig:
     normalize: bool = True  # L2 normalization after each layer
     
     # Sampling parameters
-    neighbor_sizes: List[int] = None  # Размеры neighborhood for each layers
+    neighbor_sizes: List[int] = None # Sizes neighborhood for each layers
     sampling_strategy: str = 'uniform'  # uniform, random_walk, importance
     walk_length: int = 3  # For random walk sampling
     num_walks: int = 10  # Number walks for each node
@@ -76,12 +76,12 @@ class GraphSAGEConfig:
             ]
         
         if self.neighbor_sizes is None:
-            # Уменьшающиеся размеры neighborhood by слоям
+            # sizes neighborhood by
             self.neighbor_sizes = [25, 15, 10][:self.num_layers]
 
 class AdvancedSampler:
     """
-    Продвинутый sampler for GraphSAGE with various стратегиями
+    Advanced sampler for GraphSAGE with various
     
     Strategy Pattern for sampling
     """
@@ -104,12 +104,12 @@ class AdvancedSampler:
         edge_weights: Optional[torch.Tensor] = None
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
-        Выборка соседей for указанных nodes
+        Sample neighbors for nodes
         
         Args:
-            edge_index: Индексы edges graph
-            node_indices: Индексы nodes for которых needed соседи
-            layer_idx: Index layers (влияет on size neighborhood)
+            edge_index: Indices edges graph
+            node_indices: Indices nodes for which needed
+            layer_idx: Index layers ( on size neighborhood)
             node_features: Features nodes (for importance sampling)
             edge_weights: Weights edges
         
@@ -132,7 +132,7 @@ class AdvancedSampler:
         node_features: Optional[torch.Tensor] = None,
         edge_weights: Optional[torch.Tensor] = None
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """Uniform sampling соседей"""
+        """Uniform sampling neighbors"""
         max_neighbors = self.config.neighbor_sizes[min(layer_idx, len(self.config.neighbor_sizes) - 1)]
         
         # Create adjacency list
@@ -185,7 +185,7 @@ class AdvancedSampler:
         node_features: Optional[torch.Tensor] = None,
         edge_weights: Optional[torch.Tensor] = None
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """Random walk sampling for лучшего сохранения структуры"""
+        """Random walk sampling for best saving """
         max_neighbors = self.config.neighbor_sizes[min(layer_idx, len(self.config.neighbor_sizes) - 1)]
         
         # Adjacency list with weights
@@ -205,11 +205,11 @@ class AdvancedSampler:
             start_node = start_node.item()
             neighbors_set = set()
             
-            # Execute нескольких random walks
+            # Execute several random walks
             for _ in range(self.config.num_walks):
                 current_node = start_node
                 
-                # Random walk длиной walk_length
+                # Random walk walk_length
                 for step in range(self.config.walk_length):
                     if current_node in adj_list:
                         neighbors_with_weights = adj_list[current_node]
@@ -230,7 +230,7 @@ class AdvancedSampler:
                 if len(neighbors_set) >= max_neighbors:
                     break
             
-            # Ограничение number соседей
+            # Limitation number neighbors
             sampled_neighbors = list(neighbors_set)[:max_neighbors]
             
             for neighbor in sampled_neighbors:
@@ -255,7 +255,7 @@ class AdvancedSampler:
         node_features: Optional[torch.Tensor] = None,
         edge_weights: Optional[torch.Tensor] = None
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """Importance sampling on основе node features"""
+        """Importance sampling on basis node features"""
         if node_features is None:
             # Fallback on uniform sampling
             return self._uniform_sampling(edge_index, node_indices, layer_idx, node_features, edge_weights)
@@ -282,7 +282,7 @@ class AdvancedSampler:
             if len(neighbors) <= max_neighbors:
                 sampled_neighbors = neighbors
             else:
-                # Importance sampling on основе similarity node features
+                # Importance sampling on basis similarity node features
                 node_feat = node_features[node]
                 neighbor_feats = node_features[neighbors]
                 
@@ -293,10 +293,10 @@ class AdvancedSampler:
                     dim=1
                 )
                 
-                # Softmax for превращения in вероятности
+                # Softmax for in probability
                 probs = F.softmax(similarities / self.config.temperature, dim=0)
                 
-                # Sampling by вероятностям
+                # Sampling by
                 sampled_indices = torch.multinomial(probs, max_neighbors, replacement=False)
                 sampled_neighbors = [neighbors[i] for i in sampled_indices]
             
@@ -323,13 +323,13 @@ class AdvancedSampler:
         node_features: Optional[torch.Tensor] = None,
         edge_weights: Optional[torch.Tensor] = None
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """Specialized sampling for криптоактивов on основе correlations"""
-        # Приоритет высококоррелированных assets
+        """Specialized sampling for on basis correlations"""
+        # Priority assets
         return self._importance_sampling(edge_index, node_indices, layer_idx, node_features, edge_weights)
 
 class CryptoAggregator(nn.Module):
     """
-    Кастомный aggregator for криптоданных
+    Custom aggregator for crypto data
     
     Domain-Specific Aggregation
     """
@@ -414,7 +414,7 @@ class CryptoAggregator(nn.Module):
                     aggregated[i] = torch.max(pooled, dim=0)[0]
         
         else:
-            raise ValueError(f"Неизвестный тип агрегации: {self.aggregation_type}")
+            raise ValueError(f"Unknown type aggregation: {self.aggregation_type}")
         
         return aggregated
 
@@ -436,14 +436,14 @@ class GraphSAGE(nn.Module):
         # Sampler for neighborhood sampling
         self.sampler = AdvancedSampler(config)
         
-        logger.info(f"Инициализирована GraphSAGE with {config.num_layers} слоями")
+        logger.info(f"Initialized GraphSAGE with {config.num_layers} layers")
     
     def _validate_config(self) -> None:
         """Validation configuration"""
         if self.config.input_dim <= 0:
-            raise ValueError("input_dim должно be положительным")
+            raise ValueError("input_dim should be positive")
         if self.config.output_dim <= 0:
-            raise ValueError("output_dim должно be положительным")
+            raise ValueError("output_dim should be positive")
         if not 0.0 <= self.config.dropout_rate <= 1.0:
             raise ValueError("dropout_rate should be in [0, 1]")
     
@@ -453,10 +453,10 @@ class GraphSAGE(nn.Module):
         self.batch_norms = nn.ModuleList()
         self.aggregators = nn.ModuleList()
         
-        # Dimensions слоёв
+        # Dimensions layers
         all_dims = [self.config.input_dim] + self.config.hidden_dims + [self.config.output_dim]
         
-        # Create SAGE слоёв
+        # Create SAGE layers
         for i in range(len(all_dims) - 1):
             # SAGEConv layer
             sage_layer = SAGEConv(
@@ -467,7 +467,7 @@ class GraphSAGE(nn.Module):
             )
             self.sage_layers.append(sage_layer)
             
-            # Custom aggregator for улучшенной агрегации
+            # Custom aggregator for aggregation
             aggregator = CryptoAggregator(
                 input_dim=all_dims[i],
                 aggregation_type=self.config.aggregation,
@@ -483,7 +483,7 @@ class GraphSAGE(nn.Module):
         self.dropout = nn.Dropout(self.config.dropout_rate)
         self.activation = self._get_activation()
         
-        # Output layer for финального predictions
+        # Output layer for final predictions
         self.output_layer = nn.Sequential(
             nn.Linear(self.config.output_dim, self.config.output_dim),
             nn.BatchNorm1d(self.config.output_dim),
@@ -504,7 +504,7 @@ class GraphSAGE(nn.Module):
         return activations.get(self.config.activation, nn.ReLU())
     
     def _initialize_weights(self) -> None:
-        """Initialize weights сети"""
+        """Initialize weights network"""
         for module in self.modules():
             if isinstance(module, (nn.Linear, SAGEConv)):
                 if hasattr(module, 'weight'):
@@ -518,7 +518,7 @@ class GraphSAGE(nn.Module):
         
         Args:
             data: PyG Data object
-            use_sampling: Использовать sampling for больших graphs
+            use_sampling: Use sampling for large graphs
             
         Returns:
             torch.Tensor: Predictions
@@ -530,10 +530,10 @@ class GraphSAGE(nn.Module):
         # Residual connections
         residual_x = x if self.config.use_residual else None
         
-        # Проход through SAGE layers
+        # Pass through SAGE layers
         for i, (sage_layer, aggregator) in enumerate(zip(self.sage_layers[:-1], self.aggregators[:-1])):
             
-            # Neighborhood sampling for больших graphs
+            # Neighborhood sampling for large graphs
             if use_sampling and x.size(0) > 1000:
                 node_indices = torch.arange(x.size(0))
                 sampled_edges, sampled_weights = self.sampler.sample_neighbors(
@@ -577,7 +577,7 @@ class GraphSAGE(nn.Module):
         else:
             x = torch.mean(x, dim=0, keepdim=True)
         
-        # Финальное prediction
+        # Final prediction
         output = self.output_layer(x)
         
         return output
@@ -586,15 +586,15 @@ class GraphSAGE(nn.Module):
         """
         Inductive inference for new nodes
         
-        Главное преимущество GraphSAGE - способность обрабатывать new nodes
+          GraphSAGE - new nodes
         """
         return self.forward(data, use_sampling=True)
     
     def get_node_embeddings(self, data: Data, layer_idx: int = -2) -> torch.Tensor:
-        """Get node embeddings from указанного layers"""
+        """Get node embeddings from specified layers"""
         x, edge_index = data.x, data.edge_index
         
-        # Проход up to указанного layers
+        # Pass up to specified layers
         for i in range(min(len(self.sage_layers), layer_idx + 1)):
             x = self.sage_layers[i](x, edge_index)
             
@@ -608,7 +608,7 @@ class GraphSAGE(nn.Module):
 
 class CryptoGraphSAGETrainer:
     """
-    Specialized тренер for GraphSAGE in crypto trading
+    Specialized trainer for GraphSAGE in crypto trading
     
     Scalable Training Pipeline
     """
@@ -618,7 +618,7 @@ class CryptoGraphSAGETrainer:
         self.config = config
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         
-        # Оптимизатор
+        # Optimizer
         self.optimizer = torch.optim.AdamW(
             model.parameters(),
             lr=config.learning_rate,
@@ -642,10 +642,10 @@ class CryptoGraphSAGETrainer:
             'sampling_efficiency': []
         }
         
-        logger.info(f"GraphSAGE тренер готов on устройстве: {self.device}")
+        logger.info(f"GraphSAGE trainer ready on device: {self.device}")
     
     def train_step(self, batch: Data) -> Dict[str, float]:
-        """Шаг training with sampling optimization"""
+        """Step training with sampling optimization"""
         self.model.train()
         self.optimizer.zero_grad()
         
@@ -673,7 +673,7 @@ class CryptoGraphSAGETrainer:
         }
     
     def validate_step(self, batch: Data) -> Dict[str, float]:
-        """Validation with анализом sampling efficiency"""
+        """Validation with analysis sampling efficiency"""
         self.model.eval()
         batch = batch.to(self.device)
         
@@ -691,11 +691,11 @@ class CryptoGraphSAGETrainer:
     
     def predict(self, data: Union[Data, List[Data]], inductive: bool = False) -> np.ndarray:
         """
-        Prediction with поддержкой inductive learning
+        Prediction with support inductive learning
         
         Args:
             data: Input data
-            inductive: Использовать inductive inference for new nodes
+            inductive: Use inductive inference for new nodes
         """
         self.model.eval()
         
@@ -741,7 +741,7 @@ class CryptoGraphSAGETrainer:
             # Update learning rate
             self.scheduler.step(epoch_metrics['val_loss'])
         
-        # Save истории
+        # Save history
         for key, value in epoch_metrics.items():
             if key in self.history:
                 self.history[key].append(value)
@@ -757,7 +757,7 @@ class CryptoGraphSAGETrainer:
             'config': self.config,
             'history': self.history
         }, filepath)
-        logger.info(f"GraphSAGE model сохранена in {filepath}")
+        logger.info(f"GraphSAGE model saved in {filepath}")
 
 def create_crypto_graphsage_model(
     input_dim: int,
@@ -784,7 +784,7 @@ def create_crypto_graphsage_model(
     
     return model, trainer
 
-# Экспорт for use
+# Export for use
 __all__ = [
     'GraphSAGE',
     'GraphSAGEConfig',

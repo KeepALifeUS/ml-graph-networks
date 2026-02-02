@@ -41,14 +41,14 @@ class GCNConfig:
     """
     input_dim: int = 64  # Dimension input features
     hidden_dims: List[int] = None  # Dimensions hidden layers
-    output_dim: int = 1  # Dimension выхода (price, return)
+    output_dim: int = 1 # Dimension output (price, return)
     num_layers: int = 3  # Number GCN layers
-    dropout_rate: float = 0.2  # Доля dropout for regularization
+    dropout_rate: float = 0.2 # Fraction dropout for regularization
     activation: str = 'relu'  # Function activation
-    use_batch_norm: bool = True  # Использовать BatchNorm
-    use_residual: bool = True  # Использовать residual connections
+    use_batch_norm: bool = True # Use BatchNorm
+    use_residual: bool = True # Use residual connections
     use_edge_weights: bool = True  # Account for weights edges
-    learning_rate: float = 0.001  # Скорость training
+    learning_rate: float = 0.001 # Speed training
     weight_decay: float = 1e-5  # L2 regularization
     
     def __post_init__(self):
@@ -63,7 +63,7 @@ class GraphConvolutionalNetwork(nn.Module):
     """
     Production-Ready Graph Convolutional Network
     
-    Implements многослойную GCN with современными техниками regularization
+    Implements multi-layer GCN with regularization
     and enterprise patterns for crypto trading.
     """
     
@@ -80,25 +80,25 @@ class GraphConvolutionalNetwork(nn.Module):
         # Initialize weights
         self._initialize_weights()
         
-        logger.info(f"Инициализирована GCN with {self.config.num_layers} слоями")
+        logger.info(f"Initialized GCN with {self.config.num_layers} layers")
     
     def _validate_config(self) -> None:
         """Validation configuration model"""
         if self.config.input_dim <= 0:
-            raise ValueError("input_dim должно be положительным")
+            raise ValueError("input_dim should be positive")
         if self.config.output_dim <= 0:
-            raise ValueError("output_dim должно be положительным") 
+            raise ValueError("output_dim should be positive")
         if not 0.0 <= self.config.dropout_rate <= 1.0:
-            raise ValueError("dropout_rate should be in диапазоне [0, 1]")
+            raise ValueError("dropout_rate should be in range [0, 1]")
         if self.config.num_layers < 1:
-            raise ValueError("num_layers должно be >= 1")
+            raise ValueError("num_layers should be >= 1")
     
     def _build_layers(self) -> None:
-        """Build architecture сети"""
+        """Build architecture network"""
         self.convs = nn.ModuleList()
         self.batch_norms = nn.ModuleList()
         
-        # Dimensions всех layers
+        # Dimensions all layers
         all_dims = [self.config.input_dim] + self.config.hidden_dims + [self.config.output_dim]
         
         # Create GCN layers
@@ -107,14 +107,14 @@ class GraphConvolutionalNetwork(nn.Module):
                 GCNConv(
                     in_channels=all_dims[i],
                     out_channels=all_dims[i + 1],
-                    improved=True,  # Улучшенная normalization
-                    cached=True,    # Кэширование for ускорения
+                    improved=True, # normalization
+                    cached=True, # Caching for
                     add_self_loops=True,
                     normalize=True
                 )
             )
             
-            # Batch Normalization for стабилизации training
+            # Batch Normalization for training
             if self.config.use_batch_norm and i < len(all_dims) - 2:
                 self.batch_norms.append(BatchNorm(all_dims[i + 1]))
         
@@ -124,7 +124,7 @@ class GraphConvolutionalNetwork(nn.Module):
         # Function activation
         self.activation = self._get_activation()
         
-        # Финальный layer for классификации/регрессии
+        # Final layer for classification/regression
         self.final_layer = nn.Sequential(
             nn.Linear(self.config.output_dim, self.config.output_dim),
             nn.BatchNorm1d(self.config.output_dim),
@@ -145,7 +145,7 @@ class GraphConvolutionalNetwork(nn.Module):
         return activations.get(self.config.activation, nn.ReLU())
     
     def _initialize_weights(self) -> None:
-        """Initialize weights сети"""
+        """Initialize weights network"""
         for module in self.modules():
             if isinstance(module, (nn.Linear, GCNConv)):
                 nn.init.xavier_uniform_(module.weight)
@@ -154,10 +154,10 @@ class GraphConvolutionalNetwork(nn.Module):
     
     def forward(self, data: Data) -> torch.Tensor:
         """
-        Прямой проход through GCN
+        Direct pass through GCN
         
         Args:
-            data: PyG Data объект with node features, edge indices and edge weights
+            data: PyG Data object with node features, edge indices and edge weights
             
         Returns:
             torch.Tensor: Output predictions
@@ -166,11 +166,11 @@ class GraphConvolutionalNetwork(nn.Module):
         edge_weight = getattr(data, 'edge_weight', None) if self.config.use_edge_weights else None
         batch = getattr(data, 'batch', None)
         
-        # Residual connections for глубоких сетей
+        # Residual connections for networks
         residual_x = x if self.config.use_residual else None
         
-        # Проход through GCN layers
-        for i, conv in enumerate(self.convs[:-1]):  # All layers кроме последнего
+        # Pass through GCN layers
+        for i, conv in enumerate(self.convs[:-1]): # All layers except last
             x = conv(x, edge_index, edge_weight=edge_weight)
             
             # Batch normalization
@@ -192,26 +192,26 @@ class GraphConvolutionalNetwork(nn.Module):
         # Last layer without activation
         x = self.convs[-1](x, edge_index, edge_weight=edge_weight)
         
-        # Graph-level pooling for получения одного predictions on graph
+        # Graph-level pooling for obtaining one predictions on graph
         if batch is not None:
-            # Batch processing - усреднение by узлам in each графе
+            # Batch processing - averaging by in each
             x = global_mean_pool(x, batch)
         else:
-            # Single graph - усреднение by всем узлам
+            # Single graph - averaging by all
             x = torch.mean(x, dim=0, keepdim=True)
         
-        # Финальное prediction
+        # Final prediction
         output = self.final_layer(x)
         
         return output
     
     def get_embeddings(self, data: Data, layer_idx: int = -2) -> torch.Tensor:
         """
-        Get эмбеддингов from промежуточного layers
+        Get embeddings from layers
         
         Args:
             data: Input data graph
-            layer_idx: Index layers for извлечения эмбеддингов
+            layer_idx: Index layers for embeddings
             
         Returns:
             torch.Tensor: Node embeddings
@@ -219,11 +219,11 @@ class GraphConvolutionalNetwork(nn.Module):
         x, edge_index = data.x, data.edge_index
         edge_weight = getattr(data, 'edge_weight', None) if self.config.use_edge_weights else None
         
-        # Проход up to указанного layers
+        # Pass up to specified layers
         for i in range(min(len(self.convs), layer_idx + 1)):
             x = self.convs[i](x, edge_index, edge_weight=edge_weight)
             
-            if i < len(self.convs) - 1:  # Not применяем activation to последнему слою
+            if i < len(self.convs) - 1: # Not activation to layer
                 if self.config.use_batch_norm and i < len(self.batch_norms):
                     x = self.batch_norms[i](x)
                 x = self.activation(x)
@@ -233,7 +233,7 @@ class GraphConvolutionalNetwork(nn.Module):
 
 class CryptoGCNTrainer:
     """
-    Тренер for GCN model with криптоспецифичными оптимизациями
+    Trainer for GCN model with
     
     Enterprise Training Pipeline
     """
@@ -243,14 +243,14 @@ class CryptoGCNTrainer:
         self.config = config
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         
-        # Оптимизатор with weight decay
+        # Optimizer with weight decay
         self.optimizer = torch.optim.AdamW(
             model.parameters(),
             lr=config.learning_rate,
             weight_decay=config.weight_decay
         )
         
-        # Планировщик learning rate
+        # Scheduler learning rate
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             self.optimizer,
             mode='min',
@@ -259,7 +259,7 @@ class CryptoGCNTrainer:
             verbose=True
         )
         
-        # История training
+        # History training
         self.history = {
             'train_loss': [],
             'val_loss': [],
@@ -268,27 +268,27 @@ class CryptoGCNTrainer:
         }
         
         self.model.to(self.device)
-        logger.info(f"Model перенесена on устройство: {self.device}")
+        logger.info(f"Model on : {self.device}")
     
     def train_step(self, batch: Data) -> Dict[str, float]:
-        """One шаг training"""
+        """One step training"""
         self.model.train()
         self.optimizer.zero_grad()
         
         batch = batch.to(self.device)
         
-        # Прямой проход
+        # Direct pass
         predictions = self.model(batch)
         targets = batch.y.view(-1, 1).float()
         
-        # Расчёт потерь
+        # loss
         mse_loss = F.mse_loss(predictions, targets)
         mae_loss = F.l1_loss(predictions, targets)
         
-        # Обратный проход
+        # pass
         mse_loss.backward()
         
-        # Gradient clipping for стабильности
+        # Gradient clipping for stability
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
         
         self.optimizer.step()
@@ -317,7 +317,7 @@ class CryptoGCNTrainer:
         }
     
     def train_epoch(self, train_loader, val_loader=None) -> Dict[str, float]:
-        """Training одной epochs"""
+        """Training one epochs"""
         train_losses = []
         train_maes = []
         
@@ -349,7 +349,7 @@ class CryptoGCNTrainer:
             # Update learning rate
             self.scheduler.step(epoch_metrics['val_loss'])
         
-        # Save in историю
+        # Save in history
         for key, value in epoch_metrics.items():
             self.history[key].append(value)
         
@@ -359,7 +359,7 @@ class CryptoGCNTrainer:
         """Prediction for new data"""
         self.model.eval()
         
-        # Подготовка data
+        # Preparation data
         if isinstance(data, list):
             batch = Batch.from_data_list(data)
         else:
@@ -380,7 +380,7 @@ class CryptoGCNTrainer:
             'config': self.config,
             'history': self.history
         }, filepath)
-        logger.info(f"Model сохранена in {filepath}")
+        logger.info(f"Model saved in {filepath}")
     
     def load_model(self, filepath: str) -> None:
         """Load model"""
@@ -388,7 +388,7 @@ class CryptoGCNTrainer:
         self.model.load_state_dict(checkpoint['model_state_dict'])
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         self.history = checkpoint.get('history', self.history)
-        logger.info(f"Model загружена from {filepath}")
+        logger.info(f"Model loaded from {filepath}")
 
 def create_crypto_gcn_model(
     input_dim: int,
@@ -401,12 +401,12 @@ def create_crypto_gcn_model(
     
     Args:
         input_dim: Dimension input features
-        output_dim: Dimension выхода
+        output_dim: Dimension output
         hidden_dims: Dimensions hidden layers
         **kwargs: Additional parameters configuration
         
     Returns:
-        Tuple[GraphConvolutionalNetwork, CryptoGCNTrainer]: Model and тренер
+        Tuple[GraphConvolutionalNetwork, CryptoGCNTrainer]: Model and trainer
     """
     config = GCNConfig(
         input_dim=input_dim,
@@ -420,7 +420,7 @@ def create_crypto_gcn_model(
     
     return model, trainer
 
-# Экспорт main классов
+# Export main classes
 __all__ = [
     'GraphConvolutionalNetwork',
     'GCNConfig',

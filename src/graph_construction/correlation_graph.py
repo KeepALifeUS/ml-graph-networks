@@ -37,44 +37,44 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CorrelationGraphConfig:
     """
-    Configuration for построения correlation-based graphs
+    Configuration for building correlation-based graphs
     
     Comprehensive Configuration Management
     """
     # Correlation parameters
     correlation_method: str = 'pearson'  # pearson, spearman, kendall, distance_correlation
-    time_window: int = 30  # Временное окно for correlation (days)
+    time_window: int = 30 # Temporal window for correlation (days)
     min_correlation: float = 0.3  # Minimal correlation for creation edges
     
     # Dynamic correlation parameters
     use_rolling_correlation: bool = True
-    rolling_window: int = 20  # Окно for rolling correlation
-    correlation_decay: float = 0.95  # Exponential decay for динамических correlations
+    rolling_window: int = 20 # Window for rolling correlation
+    correlation_decay: float = 0.95 # Exponential decay for dynamic correlations
     
     # Market regime awareness
     use_market_regimes: bool = True
-    volatility_threshold: float = 0.02  # Пороговое value volatility
-    regime_window: int = 10  # Окно for определения regime market
+    volatility_threshold: float = 0.02 # value volatility
+    regime_window: int = 10 # Window for determining regime market
     
     # Graph construction parameters
-    max_edges_per_node: int = 10  # Максимальное number edges on узел
+    max_edges_per_node: int = 10 # number edges on
     edge_weight_transform: str = 'absolute'  # absolute, squared, tanh
     use_edge_attributes: bool = True
     
     # Network filtering
     apply_threshold_filtering: bool = True
     apply_topological_filtering: bool = False
-    minimum_spanning_tree: bool = False  # Создавать MST вместо полного graph
+    minimum_spanning_tree: bool = False # MST full graph
     
     # Advanced features
     adjust_for_volatility: bool = True
-    use_partial_correlations: bool = False  # Частичные correlation
-    include_lag_correlations: bool = False  # Лаговые correlation
-    max_lag: int = 5  # Maximum лаг for лаговых correlations
+    use_partial_correlations: bool = False # Partial correlation
+    include_lag_correlations: bool = False # Lagged correlation
+    max_lag: int = 5 # Maximum for correlations
 
 class CorrelationCalculator:
     """
-    Вычислитель various типов correlations for crypto assets
+    Calculator various types correlations for crypto assets
     
     Strategy Pattern for correlation methods
     """
@@ -95,34 +95,34 @@ class CorrelationCalculator:
         method: Optional[str] = None
     ) -> np.ndarray:
         """
-        Computation корреляционной matrices
+        Computation correlation matrices
         
         Args:
-            data: DataFrame with ценовыми данными [time, assets]
-            method: Method correlation (if None - используется self.method)
+            data: DataFrame with price data [time, assets]
+            method: Method correlation (if None - is used self.method)
             
         Returns:
-            np.ndarray: Корреляционная matrix [n_assets, n_assets]
+            np.ndarray: matrix [n_assets, n_assets]
         """
         method = method or self.method
         
         if method not in self.correlation_functions:
-            raise ValueError(f"Неизвестный method correlation: {method}")
+            raise ValueError(f"Unknown method correlation: {method}")
         
         return self.correlation_functions[method](data)
     
     def _pearson_correlation(self, data: pd.DataFrame) -> np.ndarray:
         """Pearson correlation"""
-        # Убираем NaN values
+        # Removing NaN values
         data_clean = data.dropna()
         if data_clean.empty:
-            logger.warning("No data after удаления NaN")
+            logger.warning("No data after removal NaN")
             return np.eye(data.shape[1])
         
         return data_clean.corr(method='pearson').values
     
     def _spearman_correlation(self, data: pd.DataFrame) -> np.ndarray:
-        """Spearman ранговая correlation"""
+        """Spearman correlation"""
         data_clean = data.dropna()
         if data_clean.empty:
             return np.eye(data.shape[1])
@@ -138,7 +138,7 @@ class CorrelationCalculator:
         return data_clean.corr(method='kendall').values
     
     def _distance_correlation(self, data: pd.DataFrame) -> np.ndarray:
-        """Distance correlation (нелинейная зависимость)"""
+        """Distance correlation ( )"""
         data_clean = data.dropna()
         if data_clean.empty:
             return np.eye(data.shape[1])
@@ -148,11 +148,11 @@ class CorrelationCalculator:
         
         for i in range(n_assets):
             for j in range(i+1, n_assets):
-                # Упрощённая версия distance correlation
+                # version distance correlation
                 x = data_clean.iloc[:, i].values
                 y = data_clean.iloc[:, j].values
                 
-                # Центрированные data
+                # data
                 x_centered = x - np.mean(x)
                 y_centered = y - np.mean(y)
                 
@@ -203,10 +203,10 @@ class CorrelationCalculator:
         method: Optional[str] = None
     ) -> List[np.ndarray]:
         """
-        Rolling correlation by temporal окнам
+        Rolling correlation by temporal
         
         Returns:
-            List[np.ndarray]: Список корреляционных матриц for each temporal шага
+            List[np.ndarray]: List correlation matrices for each temporal step
         """
         method = method or self.method
         rolling_correlations = []
@@ -225,7 +225,7 @@ class CorrelationCalculator:
         method: Optional[str] = None
     ) -> Dict[int, np.ndarray]:
         """
-        Лаговые correlation between активами
+        Lagged correlation between assets
         
         Returns:
             Dict[int, np.ndarray]: {lag: correlation_matrix}
@@ -236,11 +236,11 @@ class CorrelationCalculator:
         for lag in range(1, max_lag + 1):
             lagged_data = data.copy()
             
-            # Создаём лаговые версии data
+            # Create lagged data
             for col in data.columns:
                 lagged_data[f"{col}_lag{lag}"] = data[col].shift(lag)
             
-            # Вычисляем correlation between исходными and лаговыми данными
+            # Computing correlation between and data
             original_cols = data.columns
             lagged_cols = [f"{col}_lag{lag}" for col in original_cols]
             
@@ -251,7 +251,7 @@ class CorrelationCalculator:
             
             if not cross_corr_data.empty:
                 full_corr = self.compute_correlation_matrix(cross_corr_data, method)
-                # Извлекаем cross-correlations (исходные vs лаговые)
+                # Extracting cross-correlations (original vs lagged)
                 n_assets = len(original_cols)
                 cross_correlations = full_corr[:n_assets, n_assets:]
                 lagged_correlations[lag] = cross_correlations
@@ -262,7 +262,7 @@ class CorrelationCalculator:
 
 class MarketRegimeDetector:
     """
-    Детектор market regimes for adaptive correlations
+     market regimes for adaptive correlations
     
     Market Intelligence Module
     """
@@ -276,12 +276,12 @@ class MarketRegimeDetector:
         Determine market regime (low/high volatility)
         
         Args:
-            data: DataFrame with ценовыми данными
+            data: DataFrame with price data
             
         Returns:
             pd.Series: Regimes market ('low_vol', 'high_vol')
         """
-        # Вычисляем volatility (rolling std доходностей)
+        # Computing volatility (rolling std )
         returns = data.pct_change().dropna()
         volatility = returns.rolling(window=self.window).std().mean(axis=1)
         
@@ -298,7 +298,7 @@ class MarketRegimeDetector:
         calculator: CorrelationCalculator
     ) -> Dict[str, np.ndarray]:
         """
-        Correlation in разных market regimes
+        Correlation in different market regimes
         
         Returns:
             Dict[str, np.ndarray]: {'low_vol': corr_matrix, 'high_vol': corr_matrix}
@@ -313,14 +313,14 @@ class MarketRegimeDetector:
             if len(regime_data) > 10:  # Enough data
                 regime_correlations[regime] = calculator.compute_correlation_matrix(regime_data)
             else:
-                logger.warning(f"Недостаточно data for regime {regime}")
+                logger.warning(f"Insufficient data for regime {regime}")
                 regime_correlations[regime] = np.eye(data.shape[1])
         
         return regime_correlations
 
 class CorrelationGraphBuilder:
     """
-    Main класс for построения correlation-based graphs
+    Main class for building correlation-based graphs
     
     Builder Pattern for graph construction
     """
@@ -345,24 +345,24 @@ class CorrelationGraphBuilder:
         asset_names: Optional[List[str]] = None
     ) -> Data:
         """
-        Build корреляционного graph from price data
+        Build correlation graph from price data
         
         Args:
-            price_data: DataFrame with ценами assets [time, assets]
-            volume_data: Опциональные data by volumes
+            price_data: DataFrame with assets [time, assets]
+            volume_data: data by volumes
             node_features: Additional features nodes
-            asset_names: Названия assets
+            asset_names: assets
             
         Returns:
-            Data: PyTorch Geometric Data объект
+            Data: PyTorch Geometric Data object
         """
         if asset_names is None:
             asset_names = price_data.columns.tolist()
         
-        # Computation корреляционной matrices
+        # Computation correlation matrices
         correlation_matrix = self._compute_adaptive_correlations(price_data, volume_data)
         
-        # Build graph from корреляционной matrices
+        # Build graph from correlation matrices
         edge_index, edge_weights, edge_attr = self._matrix_to_graph(
             correlation_matrix, 
             asset_names
@@ -372,7 +372,7 @@ class CorrelationGraphBuilder:
         if node_features is None:
             node_features = self._extract_node_features(price_data, volume_data)
         
-        # Create PyG Data объекта
+        # Create PyG Data object
         data = Data(
             x=torch.tensor(node_features, dtype=torch.float32),
             edge_index=edge_index,
@@ -380,7 +380,7 @@ class CorrelationGraphBuilder:
             edge_attr=edge_attr if self.config.use_edge_attributes else None
         )
         
-        # Add метаданных
+        # Add metadata
         data.asset_names = asset_names
         data.correlation_matrix = correlation_matrix
         data.num_nodes = len(asset_names)
@@ -392,7 +392,7 @@ class CorrelationGraphBuilder:
         price_data: pd.DataFrame,
         volume_data: Optional[pd.DataFrame] = None
     ) -> np.ndarray:
-        """Computation adaptive correlations with учётом configuration"""
+        """Computation adaptive correlations with taking into account configuration"""
         
         if self.config.use_rolling_correlation:
             # Rolling correlations
@@ -403,7 +403,7 @@ class CorrelationGraphBuilder:
             )
             
             if rolling_corrs:
-                # Экспоненциально взвешенное average correlations
+                # average correlations
                 weights = np.array([
                     self.config.correlation_decay ** (len(rolling_corrs) - i - 1)
                     for i in range(len(rolling_corrs))
@@ -415,12 +415,12 @@ class CorrelationGraphBuilder:
                 correlation_matrix = self.calculator.compute_correlation_matrix(price_data)
         
         elif self.config.use_market_regimes:
-            # Режим-зависимые correlation
+            # - correlation
             regime_correlations = self.regime_detector.get_regime_correlations(
                 price_data, self.calculator
             )
             
-            # Определяем current regime by последним данным
+            # Determining current regime by data
             current_regime = self.regime_detector.detect_regime(
                 price_data.tail(self.config.regime_window)
             ).mode().iloc[0]
@@ -452,7 +452,7 @@ class CorrelationGraphBuilder:
         price_data: pd.DataFrame,
         volume_data: pd.DataFrame
     ) -> np.ndarray:
-        """Корректировка correlations on volatility"""
+        """ correlations on volatility"""
         returns = price_data.pct_change().dropna()
         volatilities = returns.std().values
         
@@ -475,13 +475,13 @@ class CorrelationGraphBuilder:
         price_data: pd.DataFrame,
         correlation_matrix: np.ndarray
     ) -> np.ndarray:
-        """Частичные correlation (удаляем влияние other variables)"""
+        """Partial correlation ( influence other variables)"""
         try:
             # Precision matrix (inverse of covariance)
             returns = price_data.pct_change().dropna()
             cov_matrix = returns.cov().values
             
-            # Regularization for стабильности
+            # Regularization for stability
             reg_cov = cov_matrix + np.eye(cov_matrix.shape[0]) * 1e-6
             precision_matrix = np.linalg.inv(reg_cov)
             
@@ -499,7 +499,7 @@ class CorrelationGraphBuilder:
             return partial_corr
             
         except np.linalg.LinAlgError:
-            logger.warning("Not удалось вычислить частичные correlation, use обычные")
+            logger.warning("Not succeeded correlation, use ")
             return correlation_matrix
     
     def _matrix_to_graph(
@@ -507,27 +507,27 @@ class CorrelationGraphBuilder:
         correlation_matrix: np.ndarray,
         asset_names: List[str]
     ) -> Tuple[torch.Tensor, torch.Tensor, Optional[torch.Tensor]]:
-        """Transform корреляционной matrices in graph"""
+        """Transform correlation matrices in graph"""
         
         n_assets = len(asset_names)
         edges = []
         weights = []
         edge_attributes = []
         
-        # Create edges on основе correlations
+        # Create edges on basis correlations
         for i in range(n_assets):
-            # Получаем correlation for node i
+            # Getting correlation for node i
             node_correlations = []
             for j in range(n_assets):
                 if i != j:
                     corr_value = correlation_matrix[i, j]
-                    # Применяем трансформацию weights
+                    # Applying weights
                     weight = self._transform_edge_weight(corr_value)
                     
                     if abs(weight) >= self.config.min_correlation:
                         node_correlations.append((j, weight, corr_value))
             
-            # Sort by descending weights and take топ-K
+            # Sort by descending weights and take top-K
             node_correlations.sort(key=lambda x: abs(x[1]), reverse=True)
             top_connections = node_correlations[:self.config.max_edges_per_node]
             
@@ -536,16 +536,16 @@ class CorrelationGraphBuilder:
                 weights.append(weight)
                 
                 if self.config.use_edge_attributes:
-                    # Additional атрибуты edges
+                    # Additional attributes edges
                     edge_attr = [
-                        raw_corr,  # Исходная correlation
-                        abs(raw_corr),  # Абсолютная correlation
-                        1.0 if raw_corr > 0 else -1.0,  # Знак correlation
-                        weight  # Трансформированный weight
+                        raw_corr, # correlation
+                        abs(raw_corr), # Absolute correlation
+                        1.0 if raw_corr > 0 else -1.0, # correlation
+                        weight # weight
                     ]
                     edge_attributes.append(edge_attr)
         
-        # Minimum Spanning Tree if требуется
+        # Minimum Spanning Tree if
         if self.config.minimum_spanning_tree:
             edges, weights, edge_attributes = self._build_mst(
                 correlation_matrix, edges, weights, edge_attributes
@@ -587,22 +587,22 @@ class CorrelationGraphBuilder:
         edge_attributes: List[List[float]]
     ) -> Tuple[List[List[int]], List[float], List[List[float]]]:
         """Build Minimum Spanning Tree"""
-        # Создаём NetworkX graph
+        # Create NetworkX graph
         G = nx.Graph()
         
         for i, (edge, weight) in enumerate(zip(edges, weights)):
-            G.add_edge(edge[0], edge[1], weight=1.0 - abs(weight))  # Инвертируем for MST
+            G.add_edge(edge[0], edge[1], weight=1.0 - abs(weight)) # for MST
         
-        # Строим MST
+        # Building MST
         mst = nx.minimum_spanning_tree(G)
         
-        # Извлекаем edges MST
+        # Extracting edges MST
         mst_edges = []
         mst_weights = []
         mst_attributes = []
         
         for i, (u, v) in enumerate(mst.edges()):
-            # Находим исходный weight
+            # Finding weight
             original_weight = abs(correlation_matrix[u, v])
             mst_edges.append([u, v])
             mst_weights.append(original_weight)
@@ -624,7 +624,7 @@ class CorrelationGraphBuilder:
         price_data: pd.DataFrame,
         volume_data: Optional[pd.DataFrame] = None
     ) -> np.ndarray:
-        """Извлечение features nodes from data"""
+        """Extraction features nodes from data"""
         features = []
         
         for asset in price_data.columns:
@@ -632,31 +632,31 @@ class CorrelationGraphBuilder:
             asset_returns = asset_prices.pct_change().dropna()
             
             asset_features = [
-                # Статистические характеристики
+                # Statistical characteristics
                 asset_returns.mean(),  # Average return
                 asset_returns.std(),   # Volatility
-                asset_returns.skew(),  # Асимметрия
-                asset_returns.kurtosis(),  # Эксцесс
+                asset_returns.skew(), # Skewness
+                asset_returns.kurtosis(), #
                 
                 # Risk metrics
                 asset_returns.quantile(0.05),  # VaR 5%
                 asset_returns.quantile(0.95),  # VaR 95%
                 
-                # Технические индикаторы
+                # Technical indicators
                 asset_prices.iloc[-1] / asset_prices.iloc[0] - 1,  # Total return
-                len(asset_returns[asset_returns > 0]) / len(asset_returns),  # % положительных days
+                len(asset_returns[asset_returns > 0]) / len(asset_returns), # % positive days
             ]
             
-            # Add объёмные характеристики if available
+            # Add characteristics if available
             if volume_data is not None and asset in volume_data.columns:
                 asset_volumes = volume_data[asset].dropna()
                 asset_features.extend([
-                    asset_volumes.mean(),  # Average объём
-                    asset_volumes.std(),   # Стандартное отклонение объёма
-                    asset_volumes.iloc[-1] / asset_volumes.mean()  # Relative current объём
+                    asset_volumes.mean(), # Average volume
+                    asset_volumes.std(), # deviation
+                    asset_volumes.iloc[-1] / asset_volumes.mean() # Relative current volume
                 ])
             else:
-                # Fill нулями if no data by volumes
+                # Fill zeros if no data by volumes
                 asset_features.extend([0.0, 0.0, 1.0])
             
             features.append(asset_features)
@@ -664,10 +664,10 @@ class CorrelationGraphBuilder:
         # Normalization features
         features_array = np.array(features)
         
-        # Заменяем NaN and inf values
+        # Replacing NaN and inf values
         features_array = np.nan_to_num(features_array, nan=0.0, posinf=1.0, neginf=-1.0)
         
-        # Стандартизация
+        # Standardization
         scaler = StandardScaler()
         features_normalized = scaler.fit_transform(features_array)
         
@@ -680,37 +680,37 @@ class CorrelationGraphBuilder:
         node_features: Optional[np.ndarray] = None
     ) -> List[Data]:
         """
-        Build динамических корреляционных graphs
+        Build dynamic correlation graphs
         
         Returns:
-            List[Data]: Список graphs for each temporal шага
+            List[Data]: List graphs for each temporal step
         """
         dynamic_graphs = []
         
         for i, timestamp in enumerate(timestamps):
-            # Определяем временное окно
+            # Determining window
             start_idx = max(0, i - self.config.time_window)
             end_idx = i + 1
             
             window_data = price_data.iloc[start_idx:end_idx]
             
-            if len(window_data) < 5:  # Minimum number наблюдений
+            if len(window_data) < 5: # Minimum number
                 continue
             
-            # Строим graph for этого окна
+            # Building graph for this windows
             graph = self.build_correlation_graph(
                 window_data,
                 node_features=node_features[i:i+1] if node_features is not None else None
             )
             
-            # Add временную метку
+            # Add label
             graph.timestamp = timestamp
             graph.window_start = window_data.index[0]
             graph.window_end = window_data.index[-1]
             
             dynamic_graphs.append(graph)
         
-        logger.info(f"Построено {len(dynamic_graphs)} динамических graphs")
+        logger.info(f" {len(dynamic_graphs)} dynamic graphs")
         return dynamic_graphs
 
 def create_correlation_graph(
@@ -721,7 +721,7 @@ def create_correlation_graph(
     **kwargs
 ) -> Data:
     """
-    Factory function for быстрого creation корреляционного graph
+    Factory function for fast creation correlation graph
     
     Simple Factory for graph creation
     """
@@ -734,7 +734,7 @@ def create_correlation_graph(
     builder = CorrelationGraphBuilder(config)
     return builder.build_correlation_graph(price_data, volume_data)
 
-# Экспорт main классов
+# Export main classes
 __all__ = [
     'CorrelationGraphConfig',
     'CorrelationCalculator',

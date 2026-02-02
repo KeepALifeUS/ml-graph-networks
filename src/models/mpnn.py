@@ -45,8 +45,8 @@ class MPNNConfig:
     edge_input_dim: int = 32
     hidden_dim: int = 128
     output_dim: int = 1
-    num_layers: int = 4  # Number шагов message passing
-    num_message_passing_steps: int = 3  # T in алгоритме MPNN
+    num_layers: int = 4 # Number steps message passing
+    num_message_passing_steps: int = 3 # T in MPNN
     
     # Message function parameters
     message_function: str = 'neural'  # neural, linear, attention, crypto_correlation
@@ -89,7 +89,7 @@ class MPNNConfig:
 
 class MessageFunction(nn.Module, ABC):
     """
-    Абстрактный base класс for message functions
+    Abstract base class for message functions
     
     Strategy Pattern for message passing
     """
@@ -101,7 +101,7 @@ class MessageFunction(nn.Module, ABC):
         x_j: torch.Tensor,  # Target node features  
         edge_attr: Optional[torch.Tensor] = None
     ) -> torch.Tensor:
-        """Computation сообщения from node j to узлу i"""
+        """Computation from node j to i"""
         pass
 
 class NeuralMessageFunction(MessageFunction):
@@ -110,12 +110,12 @@ class NeuralMessageFunction(MessageFunction):
     def __init__(self, node_dim: int, edge_dim: int, hidden_dims: List[int], dropout: float = 0.1):
         super().__init__()
         
-        # Определяем входную dimension
+        # Determining dimension
         input_dim = node_dim * 2  # x_i + x_j
         if edge_dim > 0:
             input_dim += edge_dim
         
-        # Создаём многослойную сеть
+        # Create multi-layer network
         layers = []
         prev_dim = input_dim
         
@@ -133,7 +133,7 @@ class NeuralMessageFunction(MessageFunction):
         self.message_net = nn.Sequential(*layers)
         
     def forward(self, x_i: torch.Tensor, x_j: torch.Tensor, edge_attr: Optional[torch.Tensor] = None) -> torch.Tensor:
-        # Конкатенация features
+        # Concatenation features
         message_input = torch.cat([x_i, x_j], dim=-1)
         
         if edge_attr is not None:
@@ -229,31 +229,31 @@ class CryptoCorrelationMessageFunction(MessageFunction):
         )
         
     def forward(self, x_i: torch.Tensor, x_j: torch.Tensor, edge_attr: Optional[torch.Tensor] = None) -> torch.Tensor:
-        # Вычисляем correlation
+        # Computing correlation
         correlation_input = torch.cat([x_i, x_j], dim=-1)
         price_corr = self.price_correlation_net(correlation_input)
         volume_corr = self.volume_correlation_net(correlation_input)
         
-        # Взвешенное сообщение on основе correlations
+        # Weighted message on basis correlations
         correlation_weight = (price_corr + volume_corr) / 2.0
         
-        # Трансформируем сообщение
+        # message
         raw_message = self.message_transform(x_j)
         weighted_message = raw_message * correlation_weight
         
         return weighted_message
 
 class UpdateFunction(nn.Module, ABC):
-    """Абстрактный base класс for update functions"""
+    """Abstract base class for update functions"""
     
     @abstractmethod
     def forward(self, h: torch.Tensor, m: torch.Tensor) -> torch.Tensor:
         """
-        Update hidden состояния node
+        Update hidden state node
         
         Args:
-            h: Текущее скрытое состояние
-            m: Агрегированное сообщение
+            h: state
+            m: message
         """
         pass
 
@@ -315,7 +315,7 @@ class MPNNLayer(MessagePassing):
     """
     
     def __init__(self, config: MPNNConfig):
-        super().__init__(aggr='add', node_dim=0)  # aggr='add' for суммирования сообщений
+        super().__init__(aggr='add', node_dim=0) # aggr='add' for messages
         
         self.config = config
         
@@ -325,7 +325,7 @@ class MPNNLayer(MessagePassing):
         # Create update function
         self.update_function = self._create_update_function()
         
-        # Edge embedding if используются edge features
+        # Edge embedding if edge features
         if config.use_edge_features and config.edge_input_dim > 0:
             self.edge_encoder = nn.Sequential(
                 nn.Linear(config.edge_input_dim, config.edge_hidden_dim),
@@ -439,12 +439,12 @@ class MPNNLayer(MessagePassing):
         return h_new
     
     def message(self, x_i: torch.Tensor, x_j: torch.Tensor, edge_attr: Optional[torch.Tensor] = None) -> torch.Tensor:
-        """Computation сообщений between узлами"""
+        """Computation messages between """
         return self.message_function(x_i, x_j, edge_attr)
 
 class ReadoutFunction(nn.Module):
     """
-    Readout function for получения graph-level представления
+    Readout function for obtaining graph-level representations
     
     Flexible Aggregation Strategies
     """
@@ -488,7 +488,7 @@ class ReadoutFunction(nn.Module):
         
         Args:
             x: Node features [num_nodes, hidden_dim]
-            batch: Batch indices for разделения graphs
+            batch: Batch indices for separation graphs
             
         Returns:
             torch.Tensor: Graph-level features
@@ -507,14 +507,14 @@ class ReadoutFunction(nn.Module):
             attention_weights = self.attention_net(x)  # [num_nodes, 1]
             
             if batch is not None:
-                # Weighted pooling for each graph in батче
+                # Weighted pooling for each graph in batch
                 graph_features = []
                 for i in range(batch.max().item() + 1):
                     mask = (batch == i)
                     node_feats = x[mask]
                     weights = attention_weights[mask]
                     
-                    # Normalization weights внутри graph
+                    # Normalization weights graph
                     weights = F.softmax(weights, dim=0)
                     weighted_feat = torch.sum(node_feats * weights, dim=0)
                     graph_features.append(weighted_feat)
@@ -526,7 +526,7 @@ class ReadoutFunction(nn.Module):
                 return torch.sum(x * weights, dim=0, keepdim=True)
         
         elif self.readout_type == 'set2set':
-            # Set2Set pooling (упрощённая версия)
+            # Set2Set pooling ( version)
             if batch is not None:
                 graph_features = []
                 for i in range(batch.max().item() + 1):
@@ -536,7 +536,7 @@ class ReadoutFunction(nn.Module):
                     # LSTM for Set2Set
                     lstm_out, (h_n, c_n) = self.set2set_layers(node_feats)
                     
-                    # Конкатенация hidden and cell states
+                    # Concatenation hidden and cell states
                     set2set_feat = torch.cat([h_n.squeeze(0), c_n.squeeze(0)], dim=-1)
                     graph_feat = self.set2set_output(set2set_feat)
                     graph_features.append(graph_feat.squeeze(0))
@@ -556,10 +556,10 @@ class ReadoutFunction(nn.Module):
             for pool_layer in self.hierarchical_pools:
                 current_x = pool_layer(current_x)
                 
-                # Pooling on each уровне
+                # Pooling on each
                 if batch is not None:
                     current_x = global_mean_pool(current_x, batch)
-                    # For следующего уровня создаём new batch indices
+                    # For next level new batch indices
                     batch = torch.arange(current_x.size(0), device=x.device)
                 else:
                     current_x = torch.mean(current_x, dim=0, keepdim=True)
@@ -585,16 +585,16 @@ class MessagePassingNeuralNetwork(nn.Module):
         self._build_network()
         self._initialize_weights()
         
-        logger.info(f"Инициализирована MPNN with {config.num_layers} слоями, {config.num_message_passing_steps} шагов")
+        logger.info(f"Initialized MPNN with {config.num_layers} layers, {config.num_message_passing_steps} steps")
     
     def _validate_config(self) -> None:
         """Validation configuration"""
         if self.config.node_input_dim <= 0:
-            raise ValueError("node_input_dim должно be положительным")
+            raise ValueError("node_input_dim should be positive")
         if self.config.hidden_dim <= 0:
-            raise ValueError("hidden_dim должно be положительным")
+            raise ValueError("hidden_dim should be positive")
         if self.config.num_layers <= 0:
-            raise ValueError("num_layers должно be положительным")
+            raise ValueError("num_layers should be positive")
     
     def _build_network(self) -> None:
         """Build MPNN architecture"""
@@ -628,7 +628,7 @@ class MessagePassingNeuralNetwork(nn.Module):
         )
     
     def _initialize_weights(self) -> None:
-        """Initialize weights сети"""
+        """Initialize weights network"""
         for module in self.modules():
             if isinstance(module, nn.Linear):
                 nn.init.xavier_uniform_(module.weight)
@@ -659,15 +659,15 @@ class MessagePassingNeuralNetwork(nn.Module):
         for t in range(self.config.num_message_passing_steps):
             h_prev = h
             
-            # Проход through all MPNN layers
+            # Pass through all MPNN layers
             for layer in self.mpnn_layers:
                 h = layer(h, edge_index, edge_attr)
             
-            # Residual connection between шагами message passing
+            # Residual connection between steps message passing
             if self.config.use_residual and h.shape == h_prev.shape:
                 h = h + h_prev
         
-        # Readout for получения graph-level representation
+        # Readout for obtaining graph-level representation
         graph_features = self.readout(h, batch)  # [batch_size, hidden_dim]
         
         # Final prediction
@@ -691,7 +691,7 @@ class MessagePassingNeuralNetwork(nn.Module):
         return h
     
     def get_graph_representation(self, data: Data) -> torch.Tensor:
-        """Get graph-level representation without финального predictions"""
+        """Get graph-level representation without final predictions"""
         x, edge_index = data.x, data.edge_index
         edge_attr = getattr(data, 'edge_attr', None)
         batch = getattr(data, 'batch', None)
@@ -707,7 +707,7 @@ class MessagePassingNeuralNetwork(nn.Module):
 
 class CryptoMPNNTrainer:
     """
-    Specialized тренер for MPNN in crypto trading
+    Specialized trainer for MPNN in crypto trading
     
     Production Training Infrastructure
     """
@@ -717,7 +717,7 @@ class CryptoMPNNTrainer:
         self.config = config
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         
-        # Оптимизатор with специальными настройками for message passing
+        # Optimizer with settings for message passing
         self.optimizer = torch.optim.AdamW(
             model.parameters(),
             lr=config.learning_rate,
@@ -742,10 +742,10 @@ class CryptoMPNNTrainer:
             'message_passing_efficiency': [], 'convergence_steps': []
         }
         
-        logger.info(f"MPNN тренер готов on устройстве: {self.device}")
+        logger.info(f"MPNN trainer ready on device: {self.device}")
     
     def train_step(self, batch: Data) -> Dict[str, float]:
-        """Шаг training with анализом message passing"""
+        """Step training with analysis message passing"""
         self.model.train()
         self.optimizer.zero_grad()
         
@@ -771,7 +771,7 @@ class CryptoMPNNTrainer:
         # Backward pass
         total_loss.backward()
         
-        # Gradient clipping for стабильности message passing
+        # Gradient clipping for stability message passing
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=2.0)
         
         self.optimizer.step()
@@ -784,7 +784,7 @@ class CryptoMPNNTrainer:
         }
     
     def validate_step(self, batch: Data) -> Dict[str, float]:
-        """Validation with анализом message passing quality"""
+        """Validation with analysis message passing quality"""
         self.model.eval()
         batch = batch.to(self.device)
         
@@ -801,7 +801,7 @@ class CryptoMPNNTrainer:
         }
     
     def predict(self, data: Union[Data, List[Data]]) -> np.ndarray:
-        """Prediction with полным message passing"""
+        """Prediction with message passing"""
         self.model.eval()
         
         if isinstance(data, list):
@@ -817,12 +817,12 @@ class CryptoMPNNTrainer:
         return predictions.cpu().numpy()
     
     def analyze_message_passing(self, data: Data) -> Dict[str, Any]:
-        """Анализ качества message passing for интерпретации"""
+        """Analysis quality message passing for interpretation"""
         self.model.eval()
         data = data.to(self.device)
         
         with torch.no_grad():
-            # Получаем node representations on each шаге
+            # Getting node representations on each
             x = self.model.node_encoder(data.x)
             
             step_representations = []
@@ -833,13 +833,13 @@ class CryptoMPNNTrainer:
                     x = layer(x, data.edge_index, getattr(data, 'edge_attr', None))
                 step_representations.append(x.clone())
             
-            # Анализ сходимости
+            # Analysis convergence
             convergence_metrics = []
             for i in range(1, len(step_representations)):
                 prev_repr = step_representations[i-1]
                 curr_repr = step_representations[i]
                 
-                # Cosine similarity between шагами
+                # Cosine similarity between steps
                 similarity = F.cosine_similarity(prev_repr.flatten(), curr_repr.flatten(), dim=0)
                 convergence_metrics.append(similarity.item())
         
@@ -858,7 +858,7 @@ class CryptoMPNNTrainer:
             'config': self.config,
             'history': self.history
         }, filepath)
-        logger.info(f"MPNN model сохранена in {filepath}")
+        logger.info(f"MPNN model saved in {filepath}")
 
 def create_crypto_mpnn_model(
     node_input_dim: int,
@@ -885,7 +885,7 @@ def create_crypto_mpnn_model(
     
     return model, trainer
 
-# Экспорт for use
+# Export for use
 __all__ = [
     'MessagePassingNeuralNetwork',
     'MPNNConfig',
