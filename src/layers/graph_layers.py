@@ -26,7 +26,7 @@ from typing import Optional, Tuple, Union
 
 class TemporalGraphConv(MessagePassing):
     """
-    Temporal Graph Convolution Layer для временных рядов crypto данных
+    Temporal Graph Convolution Layer for temporal рядов crypto data
     
     Temporal-Aware Graph Processing
     """
@@ -76,7 +76,7 @@ class TemporalGraphConv(MessagePassing):
 
 class CryptoAttentionLayer(nn.Module):
     """
-    Специализированный attention layer для crypto asset relationships
+    Specialized attention layer for crypto asset relationships
     
     Domain-Specific Attention Mechanisms
     """
@@ -132,7 +132,7 @@ class CryptoAttentionLayer(nn.Module):
 
 class DynamicEdgeWeightLearner(nn.Module):
     """
-    Learnable edge weights для адаптивных graph relationships
+    Learnable edge weights for adaptive graph relationships
     
     Adaptive Graph Structure Learning
     """

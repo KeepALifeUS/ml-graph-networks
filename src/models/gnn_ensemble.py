@@ -30,7 +30,7 @@ import pickle
 import json
 import warnings
 
-# Импорт наших GNN моделей
+# Импорт наших GNN models
 from .gcn import GraphConvolutionalNetwork, GCNConfig
 from .gat import GraphAttentionNetwork, GATConfig
 from .graphsage import GraphSAGE, GraphSAGEConfig
@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class EnsembleConfig:
     """
-    Конфигурация для GNN Ensemble
+    Configuration for GNN Ensemble
     
     Comprehensive Ensemble Configuration
     """
@@ -59,8 +59,8 @@ class EnsembleConfig:
     # Adaptive weighting parameters
     use_adaptive_weights: bool = True
     weight_update_frequency: int = 100  # steps
-    performance_window_size: int = 50  # performance window для адаптации
-    min_weight: float = 0.1  # Минимальный вес модели
+    performance_window_size: int = 50  # performance window for адаптации
+    min_weight: float = 0.1  # Minimum weight model
     
     # Uncertainty quantification
     enable_uncertainty: bool = True
@@ -93,7 +93,7 @@ class EnsembleConfig:
 
 class ModelPerformanceTracker:
     """
-    Трекер производительности отдельных моделей для адаптивных весов
+    Трекер performance отдельных models for adaptive weights
     
     Real-time Performance Analytics
     """
@@ -104,7 +104,7 @@ class ModelPerformanceTracker:
         self.current_weights = {}
         
     def update_performance(self, model_name: str, metrics: Dict[str, float]) -> None:
-        """Обновление метрик производительности модели"""
+        """Update metrics performance model"""
         for metric_name, value in metrics.items():
             key = f"{model_name}_{metric_name}"
             self.performance_history[key].append(value)
@@ -114,42 +114,42 @@ class ModelPerformanceTracker:
                 self.performance_history[key] = self.performance_history[key][-self.window_size:]
     
     def get_recent_performance(self, model_name: str, metric: str) -> List[float]:
-        """Получение недавних метрик производительности"""
+        """Get недавних metrics performance"""
         key = f"{model_name}_{metric}"
         return self.performance_history.get(key, [])
     
     def compute_adaptive_weights(self, models: List[str], metric: str = 'mae', min_weight: float = 0.1) -> Dict[str, float]:
         """
-        Вычисление адаптивных весов на основе производительности
+        Computation adaptive weights on основе performance
         
-        Модели с лучшей производительностью получают больший вес
+        Model with best производительностью получают больший weight
         """
         weights = {}
         performance_scores = {}
         
-        # Вычисляем средние показатели производительности
+        # Вычисляем averages показатели performance
         for model_name in models:
             recent_performance = self.get_recent_performance(model_name, metric)
             if recent_performance:
-                # Для MAE и MSE - чем меньше, тем лучше
+                # For MAE and MSE - the smaller, the better
                 if metric in ['mae', 'mse']:
                     avg_performance = np.mean(recent_performance)
                     performance_scores[model_name] = 1.0 / (avg_performance + 1e-8)
                 else:
-                    # Для accuracy метрик - чем больше, тем лучше
+                    # For accuracy metrics - чем больше, тем лучше
                     performance_scores[model_name] = np.mean(recent_performance)
             else:
-                # Если нет истории - равный вес
+                # If no истории - equal weight
                 performance_scores[model_name] = 1.0
         
-        # Нормализация весов
+        # Normalization weights
         total_score = sum(performance_scores.values())
         for model_name in models:
             weight = performance_scores[model_name] / total_score
-            # Применяем минимальный вес
+            # Применяем minimum weight
             weights[model_name] = max(weight, min_weight)
         
-        # Перенормализация после применения минимальных весов
+        # Перенормализация after применения minimum weights
         total_weight = sum(weights.values())
         for model_name in weights:
             weights[model_name] /= total_weight
@@ -158,7 +158,7 @@ class ModelPerformanceTracker:
         return weights
     
     def get_performance_summary(self) -> Dict[str, Dict[str, float]]:
-        """Получение сводки по производительности всех моделей"""
+        """Get сводки by performance всех models"""
         summary = {}
         
         for key, values in self.performance_history.items():
@@ -179,7 +179,7 @@ class ModelPerformanceTracker:
 
 class UncertaintyQuantifier:
     """
-    Модуль для квантификации неопределённости в ensemble predictions
+    Модуль for квантификации неопределённости in ensemble predictions
     
     Risk Assessment and Uncertainty Management
     """
@@ -194,12 +194,12 @@ class UncertaintyQuantifier:
         data: Optional[Data] = None
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
-        Вычисление неопределённости предсказаний
+        Computation неопределённости predictions
         
         Args:
-            predictions: Список предсказаний от разных моделей
-            models: Список моделей (для MC dropout)
-            data: Входные данные (для MC dropout)
+            predictions: Список predictions from разных models
+            models: Список models (for MC dropout)
+            data: Input data (for MC dropout)
             
         Returns:
             Tuple[torch.Tensor, torch.Tensor]: (mean_prediction, uncertainty)
@@ -208,20 +208,20 @@ class UncertaintyQuantifier:
             return self._ensemble_variance_uncertainty(predictions)
         elif self.method == 'monte_carlo_dropout':
             if models is None or data is None:
-                raise ValueError("Models и data необходимы для MC dropout")
+                raise ValueError("Models and data необходимы for MC dropout")
             return self._monte_carlo_dropout_uncertainty(models, data)
         else:
-            raise ValueError(f"Неизвестный метод uncertainty: {self.method}")
+            raise ValueError(f"Неизвестный method uncertainty: {self.method}")
     
     def _ensemble_variance_uncertainty(self, predictions: List[torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
-        """Неопределённость на основе variance между моделями"""
-        # Стекаем предсказания
+        """Неопределённость on основе variance between моделями"""
+        # Стекаем predictions
         stacked_predictions = torch.stack(predictions, dim=0)  # [num_models, batch_size, output_dim]
         
-        # Среднее предсказание
+        # Average prediction
         mean_prediction = torch.mean(stacked_predictions, dim=0)
         
-        # Variance как мера неопределённости
+        # Variance as мера неопределённости
         uncertainty = torch.var(stacked_predictions, dim=0)
         
         return mean_prediction, uncertainty
@@ -232,7 +232,7 @@ class UncertaintyQuantifier:
         data: Data, 
         num_samples: int = 10
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """MC Dropout uncertainty для каждой модели"""
+        """MC Dropout uncertainty for each model"""
         all_predictions = []
         
         for model in models:
@@ -244,11 +244,11 @@ class UncertaintyQuantifier:
                     pred = model(data)
                     model_predictions.append(pred)
             
-            # Среднее предсказание от этой модели
+            # Average prediction from this model
             model_mean = torch.mean(torch.stack(model_predictions), dim=0)
             all_predictions.append(model_mean)
             
-            model.eval()  # Возвращаем в eval mode
+            model.eval()  # Return in eval mode
         
         # Ensemble uncertainty
         return self._ensemble_variance_uncertainty(all_predictions)
@@ -260,12 +260,12 @@ class UncertaintyQuantifier:
         confidence_level: float = 0.95
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
-        Вычисление доверительного интервала
+        Computation доверительного интервала
         
         Returns:
             Tuple[torch.Tensor, torch.Tensor]: (lower_bound, upper_bound)
         """
-        # Z-score для указанного уровня доверия
+        # Z-score for указанного уровня доверия
         from scipy.stats import norm
         z_score = norm.ppf((1 + confidence_level) / 2)
         
@@ -279,7 +279,7 @@ class UncertaintyQuantifier:
 
 class GraphNeuralNetworkEnsemble(nn.Module):
     """
-    Production-Ready GNN Ensemble для crypto trading
+    Production-Ready GNN Ensemble for crypto trading
     
     Scalable Ensemble Learning Architecture
     """
@@ -288,39 +288,39 @@ class GraphNeuralNetworkEnsemble(nn.Module):
         super().__init__()
         self.config = config
         
-        # Инициализация индивидуальных моделей
+        # Initialize индивидуальных models
         self.models = nn.ModuleDict()
         self._initialize_models()
         
-        # Система весов ensemble
+        # Система weights ensemble
         self.model_weights = nn.Parameter(
             torch.tensor(list(self.config.initial_weights.values()), dtype=torch.float32),
             requires_grad=self.config.use_meta_learning
         )
         self.model_names = list(self.config.initial_weights.keys())
         
-        # Трекер производительности
+        # Трекер performance
         self.performance_tracker = ModelPerformanceTracker(self.config.performance_window_size)
         
         # Quantifier неопределённости
         if self.config.enable_uncertainty:
             self.uncertainty_quantifier = UncertaintyQuantifier(self.config.uncertainty_method)
         
-        # Meta-learning для весов (опционально)
+        # Meta-learning for weights (опционально)
         if self.config.use_meta_learning:
             self.meta_optimizer = torch.optim.Adam(
                 [self.model_weights], 
                 lr=self.config.meta_learning_lr
             )
         
-        # Мониторинг
+        # Monitor
         self.step_counter = 0
         self.monitoring_data = defaultdict(list)
         
-        logger.info(f"Инициализирован GNN Ensemble с {len(self.models)} моделями")
+        logger.info(f"Initialized GNN Ensemble with {len(self.models)} моделями")
     
     def _initialize_models(self) -> None:
-        """Инициализация индивидуальных GNN моделей"""
+        """Initialize индивидуальных GNN models"""
         
         # GCN
         if self.config.gcn_config is not None:
@@ -339,12 +339,12 @@ class GraphNeuralNetworkEnsemble(nn.Module):
             self.models['mpnn'] = MessagePassingNeuralNetwork(self.config.mpnn_config)
         
         if len(self.models) == 0:
-            raise ValueError("Необходимо указать конфигурацию хотя бы для одной модели")
+            raise ValueError("Configuration for at least one model must be specified")
         
-        # Обновляем веса если модели отличаются от конфигурации
+        # Обновляем weights if model отличаются from configuration
         active_models = list(self.models.keys())
         if set(active_models) != set(self.config.initial_weights.keys()):
-            # Пересчитываем веса для активных моделей
+            # Пересчитываем weights for активных models
             equal_weight = 1.0 / len(active_models)
             new_weights = {model: equal_weight for model in active_models}
             self.config.initial_weights = new_weights
@@ -352,25 +352,25 @@ class GraphNeuralNetworkEnsemble(nn.Module):
     
     def forward(self, data: Data, return_individual: bool = False, return_uncertainty: bool = False) -> Union[torch.Tensor, Tuple[torch.Tensor, ...]]:
         """
-        Forward pass через ensemble
+        Forward pass through ensemble
         
         Args:
-            data: Входные данные графа
-            return_individual: Возвращать индивидуальные предсказания
+            data: Input data graph
+            return_individual: Возвращать индивидуальные predictions
             return_uncertainty: Возвращать uncertainty estimates
             
         Returns:
-            Union[torch.Tensor, Tuple]: Ensemble prediction и опционально дополнительная информация
+            Union[torch.Tensor, Tuple]: Ensemble prediction and опционально дополнительная информация
         """
         individual_predictions = []
         individual_results = {}
         
-        # Получение предсказаний от каждой модели
+        # Get predictions from each model
         for model_name, model in self.models.items():
             try:
                 if model_name == 'gat' and hasattr(model, 'forward'):
-                    # GAT возвращает также attention weights
-                    pred, _ = model(data)  # Игнорируем attention weights в ensemble
+                    # GAT returns also attention weights
+                    pred, _ = model(data)  # Игнорируем attention weights in ensemble
                 else:
                     pred = model(data)
                 
@@ -378,8 +378,8 @@ class GraphNeuralNetworkEnsemble(nn.Module):
                 individual_results[model_name] = pred
                 
             except Exception as e:
-                logger.warning(f"Ошибка в модели {model_name}: {e}")
-                # Создаём dummy prediction чтобы не сломать ensemble
+                logger.warning(f"Error in model {model_name}: {e}")
+                # Создаём dummy prediction чтобы not сломать ensemble
                 dummy_pred = torch.zeros_like(individual_predictions[0] if individual_predictions else torch.zeros((data.x.size(0) if hasattr(data, 'batch') else 1, 1)))
                 individual_predictions.append(dummy_pred)
                 individual_results[model_name] = dummy_pred
@@ -387,7 +387,7 @@ class GraphNeuralNetworkEnsemble(nn.Module):
         # Ensemble aggregation
         ensemble_prediction = self._aggregate_predictions(individual_predictions)
         
-        # Результаты для возврата
+        # Results for возврата
         results = [ensemble_prediction]
         
         if return_individual:
@@ -397,17 +397,17 @@ class GraphNeuralNetworkEnsemble(nn.Module):
             _, uncertainty = self.uncertainty_quantifier.compute_uncertainty(individual_predictions)
             results.append(uncertainty)
         
-        # Обновление шаг counter
+        # Update шаг counter
         self.step_counter += 1
         
         return results[0] if len(results) == 1 else tuple(results)
     
     def _aggregate_predictions(self, predictions: List[torch.Tensor]) -> torch.Tensor:
-        """Агрегация предсказаний согласно ensemble method"""
+        """Aggregation predictions согласно ensemble method"""
         
         if self.config.ensemble_method == 'weighted_average':
             # Weighted average
-            weights = F.softmax(self.model_weights, dim=0)  # Нормализация весов
+            weights = F.softmax(self.model_weights, dim=0)  # Normalization weights
             
             weighted_predictions = []
             for i, pred in enumerate(predictions):
@@ -416,13 +416,13 @@ class GraphNeuralNetworkEnsemble(nn.Module):
             return torch.sum(torch.stack(weighted_predictions), dim=0)
         
         elif self.config.ensemble_method == 'voting':
-            # Majority voting (для классификации)
-            # Для регрессии используем median
+            # Majority voting (for классификации)
+            # For регрессии use median
             stacked_predictions = torch.stack(predictions, dim=0)
             return torch.median(stacked_predictions, dim=0)[0]
         
         elif self.config.ensemble_method == 'dynamic_weighting':
-            # Адаптивные веса на основе недавней производительности
+            # Adaptive weights on основе недавней performance
             if hasattr(self, 'performance_tracker') and self.performance_tracker.current_weights:
                 weights = []
                 for model_name in self.model_names:
@@ -430,7 +430,7 @@ class GraphNeuralNetworkEnsemble(nn.Module):
                     weights.append(weight)
                 
                 weights = torch.tensor(weights, device=predictions[0].device)
-                weights = weights / torch.sum(weights)  # Нормализация
+                weights = weights / torch.sum(weights)  # Normalization
                 
                 weighted_predictions = []
                 for i, pred in enumerate(predictions):
@@ -438,7 +438,7 @@ class GraphNeuralNetworkEnsemble(nn.Module):
                 
                 return torch.sum(torch.stack(weighted_predictions), dim=0)
             else:
-                # Fallback на обычное усреднение
+                # Fallback on обычное усреднение
                 return torch.mean(torch.stack(predictions), dim=0)
         
         else:
@@ -446,40 +446,40 @@ class GraphNeuralNetworkEnsemble(nn.Module):
             return torch.mean(torch.stack(predictions), dim=0)
     
     def update_model_weights(self, performance_metrics: Dict[str, Dict[str, float]]) -> None:
-        """Обновление весов моделей на основе производительности"""
+        """Update weights models on основе performance"""
         
-        # Обновляем трекер производительности
+        # Обновляем трекер performance
         for model_name, metrics in performance_metrics.items():
             if model_name in self.model_names:
                 self.performance_tracker.update_performance(model_name, metrics)
         
-        # Пересчитываем веса если используем адаптивное взвешивание
+        # Пересчитываем weights if use адаптивное взвешивание
         if self.config.use_adaptive_weights and self.step_counter % self.config.weight_update_frequency == 0:
             new_weights = self.performance_tracker.compute_adaptive_weights(
                 self.model_names, 
-                metric='mae',  # Можно сделать configurable
+                metric='mae',  # Possible сделать configurable
                 min_weight=self.config.min_weight
             )
             
-            logger.info(f"Обновлены веса моделей: {new_weights}")
+            logger.info(f"Обновлены weights models: {new_weights}")
     
     def predict_with_uncertainty(self, data: Union[Data, List[Data]]) -> Dict[str, np.ndarray]:
         """
-        Предсказание с оценкой неопределённости
+        Prediction with оценкой неопределённости
         
         Returns:
             Dict содержащий prediction, uncertainty, confidence_intervals
         """
         self.eval()
         
-        # Подготовка данных
+        # Подготовка data
         if isinstance(data, list):
             batch = Batch.from_data_list(data)
         else:
             batch = data
         
         with torch.no_grad():
-            # Получение индивидуальных предсказаний
+            # Get индивидуальных predictions
             individual_predictions = []
             for model_name, model in self.models.items():
                 try:
@@ -489,11 +489,11 @@ class GraphNeuralNetworkEnsemble(nn.Module):
                         pred = model(batch)
                     individual_predictions.append(pred)
                 except Exception as e:
-                    logger.warning(f"Ошибка в модели {model_name}: {e}")
+                    logger.warning(f"Error in model {model_name}: {e}")
                     continue
             
             if not individual_predictions:
-                raise RuntimeError("Все модели в ensemble вернули ошибки")
+                raise RuntimeError("All model in ensemble вернули errors")
             
             # Ensemble prediction
             ensemble_pred = self._aggregate_predictions(individual_predictions)
@@ -528,7 +528,7 @@ class GraphNeuralNetworkEnsemble(nn.Module):
                 }
     
     def get_model_importance(self) -> Dict[str, float]:
-        """Получение важности каждой модели в ensemble"""
+        """Get важности each model in ensemble"""
         if self.config.use_meta_learning:
             weights = F.softmax(self.model_weights, dim=0)
             return {name: weight.item() for name, weight in zip(self.model_names, weights)}
@@ -536,7 +536,7 @@ class GraphNeuralNetworkEnsemble(nn.Module):
             return self.performance_tracker.current_weights if self.performance_tracker.current_weights else self.config.initial_weights
     
     def get_performance_report(self) -> Dict[str, Any]:
-        """Получение детального отчёта о производительности"""
+        """Get детального отчёта о performance"""
         return {
             'model_weights': self.get_model_importance(),
             'performance_summary': self.performance_tracker.get_performance_summary(),
@@ -551,7 +551,7 @@ class GraphNeuralNetworkEnsemble(nn.Module):
 
 class CryptoGNNEnsembleTrainer:
     """
-    Специализированный тренер для GNN Ensemble
+    Specialized тренер for GNN Ensemble
     
     Enterprise Ensemble Training Pipeline
     """
@@ -561,7 +561,7 @@ class CryptoGNNEnsembleTrainer:
         self.config = config
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         
-        # Оптимизаторы для разных компонентов
+        # Оптимизаторы for разных components
         self.model_optimizers = {}
         for model_name, model in self.ensemble.models.items():
             self.model_optimizers[model_name] = torch.optim.AdamW(
@@ -570,7 +570,7 @@ class CryptoGNNEnsembleTrainer:
                 weight_decay=config.weight_decay
             )
         
-        # Scheduler для ensemble
+        # Scheduler for ensemble
         self.schedulers = {}
         for model_name, optimizer in self.model_optimizers.items():
             self.schedulers[model_name] = torch.optim.lr_scheduler.ReduceLROnPlateau(
@@ -579,7 +579,7 @@ class CryptoGNNEnsembleTrainer:
         
         self.ensemble.to(self.device)
         
-        # История обучения
+        # История training
         self.history = {
             'ensemble_loss': [], 'ensemble_mae': [],
             'individual_losses': {name: [] for name in self.ensemble.models.keys()},
@@ -587,13 +587,13 @@ class CryptoGNNEnsembleTrainer:
             'uncertainty_metrics': []
         }
         
-        logger.info(f"Ensemble тренер готов с {len(self.ensemble.models)} моделями")
+        logger.info(f"Ensemble тренер готов with {len(self.ensemble.models)} моделями")
     
     def train_step(self, batch: Data) -> Dict[str, float]:
-        """Шаг обучения ensemble"""
+        """Шаг training ensemble"""
         batch = batch.to(self.device)
         
-        # Обучение каждой модели индивидуально
+        # Training each model индивидуально
         individual_losses = {}
         individual_metrics = {}
         
@@ -625,14 +625,14 @@ class CryptoGNNEnsembleTrainer:
                 individual_metrics[model_name] = {'mae': mae.item(), 'mse': loss.item()}
                 
             except Exception as e:
-                logger.warning(f"Ошибка в обучении модели {model_name}: {e}")
+                logger.warning(f"Error in обучении model {model_name}: {e}")
                 individual_losses[model_name] = float('inf')
                 individual_metrics[model_name] = {'mae': float('inf'), 'mse': float('inf')}
         
-        # Обновление весов ensemble
+        # Update weights ensemble
         self.ensemble.update_model_weights(individual_metrics)
         
-        # Ensemble prediction для метрик
+        # Ensemble prediction for metrics
         self.ensemble.eval()
         with torch.no_grad():
             ensemble_pred = self.ensemble(batch)
@@ -650,7 +650,7 @@ class CryptoGNNEnsembleTrainer:
         }
     
     def validate_step(self, batch: Data) -> Dict[str, float]:
-        """Валидация ensemble"""
+        """Validation ensemble"""
         self.ensemble.eval()
         batch = batch.to(self.device)
         
@@ -666,11 +666,11 @@ class CryptoGNNEnsembleTrainer:
             
             targets = batch.y.view(-1, 1).float()
             
-            # Метрики
+            # Metrics
             ensemble_loss = F.mse_loss(ensemble_pred, targets)
             ensemble_mae = F.l1_loss(ensemble_pred, targets)
             
-            # Directional accuracy (для финансовых данных)
+            # Directional accuracy (for финансовых data)
             pred_direction = torch.sign(ensemble_pred)
             target_direction = torch.sign(targets)
             directional_accuracy = (pred_direction == target_direction).float().mean()
@@ -688,7 +688,7 @@ class CryptoGNNEnsembleTrainer:
             return metrics
     
     def train_epoch(self, train_loader, val_loader=None) -> Dict[str, float]:
-        """Обучение одной эпохи ensemble"""
+        """Training одной epochs ensemble"""
         train_metrics = {
             'ensemble_loss': [], 'ensemble_mae': [],
             'individual_losses': {name: [] for name in self.ensemble.models.keys()}
@@ -703,7 +703,7 @@ class CryptoGNNEnsembleTrainer:
             for model_name, loss in metrics['individual_losses'].items():
                 train_metrics['individual_losses'][model_name].append(loss)
         
-        # Агрегация метрик
+        # Aggregation metrics
         epoch_metrics = {
             'train_ensemble_loss': np.mean(train_metrics['ensemble_loss']),
             'train_ensemble_mae': np.mean(train_metrics['ensemble_mae'])
@@ -712,7 +712,7 @@ class CryptoGNNEnsembleTrainer:
         for model_name, losses in train_metrics['individual_losses'].items():
             epoch_metrics[f'train_{model_name}_loss'] = np.mean([l for l in losses if l != float('inf')])
         
-        # Валидация
+        # Validation
         if val_loader is not None:
             val_metrics = {'loss': [], 'mae': [], 'directional_accuracy': [], 'avg_uncertainty': []}
             
@@ -723,18 +723,18 @@ class CryptoGNNEnsembleTrainer:
                         val_metrics[key].append(metrics[key])
             
             for key, values in val_metrics.items():
-                if values:  # Если есть значения
+                if values:  # If there is values
                     epoch_metrics[f'val_{key}'] = np.mean(values)
             
-            # Обновление schedulers
+            # Update schedulers
             for model_name, scheduler in self.schedulers.items():
                 scheduler.step(epoch_metrics.get('val_loss', epoch_metrics['train_ensemble_loss']))
         
-        # Сохранение текущих весов моделей
+        # Save текущих weights models
         current_weights = self.ensemble.get_model_importance()
         epoch_metrics['model_weights'] = current_weights
         
-        # Обновление истории
+        # Update истории
         for key, value in epoch_metrics.items():
             if key in self.history:
                 self.history[key].append(value)
@@ -744,7 +744,7 @@ class CryptoGNNEnsembleTrainer:
         return epoch_metrics
     
     def save_ensemble(self, filepath: str) -> None:
-        """Сохранение всего ensemble"""
+        """Save всего ensemble"""
         save_dict = {
             'ensemble_state_dict': self.ensemble.state_dict(),
             'model_optimizers': {name: opt.state_dict() for name, opt in self.model_optimizers.items()},
@@ -756,10 +756,10 @@ class CryptoGNNEnsembleTrainer:
         }
         
         torch.save(save_dict, filepath)
-        logger.info(f"Ensemble сохранён в {filepath}")
+        logger.info(f"Ensemble сохранён in {filepath}")
     
     def load_ensemble(self, filepath: str) -> None:
-        """Загрузка ensemble"""
+        """Load ensemble"""
         checkpoint = torch.load(filepath, map_location=self.device)
         
         self.ensemble.load_state_dict(checkpoint['ensemble_state_dict'])
@@ -775,7 +775,7 @@ class CryptoGNNEnsembleTrainer:
         self.history = checkpoint.get('history', self.history)
         self.ensemble.performance_tracker = checkpoint.get('performance_tracker', self.ensemble.performance_tracker)
         
-        logger.info(f"Ensemble загружён из {filepath}")
+        logger.info(f"Ensemble загружён from {filepath}")
 
 def create_crypto_gnn_ensemble(
     input_dim: int,
@@ -785,11 +785,11 @@ def create_crypto_gnn_ensemble(
     **kwargs
 ) -> Tuple[GraphNeuralNetworkEnsemble, CryptoGNNEnsembleTrainer]:
     """
-    Factory функция для создания GNN Ensemble
+    Factory function for creation GNN Ensemble
     
     Factory with Full Configuration
     """
-    # Создание конфигураций для каждой модели
+    # Create конфигураций for each model
     model_configs = {}
     
     if enable_all_models:
@@ -833,7 +833,7 @@ def create_crypto_gnn_ensemble(
     
     return ensemble, trainer
 
-# Экспорт для использования
+# Экспорт for use
 __all__ = [
     'GraphNeuralNetworkEnsemble',
     'EnsembleConfig',

@@ -62,7 +62,7 @@ from .gnn_ensemble import (
     create_crypto_gnn_ensemble
 )
 
-# Model registry для dynamic model creation
+# Model registry for dynamic model creation
 MODEL_REGISTRY = {
     'gcn': GraphConvolutionalNetwork,
     'gat': GraphAttentionNetwork,

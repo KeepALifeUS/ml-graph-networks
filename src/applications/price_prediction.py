@@ -83,7 +83,7 @@ class CryptoPricePredictor:
         self.last_training_time = None
         self.prediction_history = []
         
-        logger.info("Инициализирован CryptoPricePredictor")
+        logger.info("Initialized CryptoPricePredictor")
     
     def prepare_data(
         self, 
@@ -92,7 +92,7 @@ class CryptoPricePredictor:
         external_features: Optional[pd.DataFrame] = None
     ) -> List[Data]:
         """
-        Подготовка данных для обучения/предсказания
+        Подготовка data for training/predictions
         
         Args:
             price_data: Historical price data [timestamp, assets]
@@ -137,10 +137,10 @@ class CryptoPricePredictor:
                     graphs.append(graph)
                     
             except Exception as e:
-                logger.warning(f"Ошибка создания графа для {timestamp}: {e}")
+                logger.warning(f"Error creation graph for {timestamp}: {e}")
                 continue
         
-        logger.info(f"Подготовлено {len(graphs)} графов для обучения/предсказания")
+        logger.info(f"Подготовлено {len(graphs)} graphs for training/predictions")
         return graphs
     
     def train(
@@ -152,15 +152,15 @@ class CryptoPricePredictor:
         batch_size: int = 32
     ) -> Dict[str, List[float]]:
         """
-        Обучение GNN ensemble для price prediction
+        Training GNN ensemble for price prediction
         """
-        logger.info("Начало обучения модели предсказания цен")
+        logger.info("Начало training model predictions prices")
         
-        # Подготовка данных
+        # Подготовка data
         graphs = self.prepare_data(price_data, volume_data)
         
         if len(graphs) < 10:
-            raise ValueError("Недостаточно данных для обучения")
+            raise ValueError("Недостаточно data for training")
         
         # Train/validation split
         split_idx = int(len(graphs) * (1 - validation_split))
@@ -195,7 +195,7 @@ class CryptoPricePredictor:
         self.is_trained = True
         self.last_training_time = pd.Timestamp.now()
         
-        logger.info("Обучение завершено успешно")
+        logger.info("Training завершено успешно")
         return history
     
     def predict(
@@ -205,19 +205,19 @@ class CryptoPricePredictor:
         return_uncertainty: bool = True
     ) -> Dict[str, Union[np.ndarray, float]]:
         """
-        Предсказание цен с uncertainty quantification
+        Prediction prices with uncertainty quantification
         
         Returns:
             Dict with predictions, uncertainty, and confidence intervals
         """
         if not self.is_trained:
-            raise RuntimeError("Модель не обучена. Вызовите train() сначала.")
+            raise RuntimeError("Model not обучена. Вызовите train() сначала.")
         
         # Prepare latest data for prediction
         graphs = self.prepare_data(price_data, volume_data)
         
         if not graphs:
-            raise ValueError("Не удалось подготовить данные для предсказания")
+            raise ValueError("Not удалось подготовить data for predictions")
         
         # Use latest graph for prediction
         latest_graph = graphs[-1]
@@ -294,7 +294,7 @@ class CryptoPricePredictor:
         Feature importance analysis using model attention weights
         """
         if not self.is_trained:
-            raise RuntimeError("Модель не обучена")
+            raise RuntimeError("Model not обучена")
         
         graphs = self.prepare_data(price_data)
         if not graphs:
@@ -317,7 +317,7 @@ class CryptoPricePredictor:
                     attention_importance[f'layer_{i}_attention'] = att_weights.mean().item()
                     
         except Exception as e:
-            logger.warning(f"Не удалось получить attention weights: {e}")
+            logger.warning(f"Not удалось получить attention weights: {e}")
         
         return {
             'model_importance': model_importance,
@@ -338,13 +338,13 @@ class CryptoPricePredictor:
         Evaluate model performance on test data
         """
         if not self.is_trained:
-            raise RuntimeError("Модель не обучена")
+            raise RuntimeError("Model not обучена")
         
         # Prepare test data
         test_graphs = self.prepare_data(test_price_data, volume_data)
         
         if not test_graphs:
-            raise ValueError("Нет тестовых данных")
+            raise ValueError("No test data")
         
         predictions = []
         actuals = []
@@ -387,13 +387,13 @@ class CryptoPricePredictor:
     def save_model(self, filepath: str) -> None:
         """Save trained model"""
         self.trainer.save_ensemble(filepath)
-        logger.info(f"Модель сохранена в {filepath}")
+        logger.info(f"Model сохранена in {filepath}")
     
     def load_model(self, filepath: str) -> None:
         """Load trained model"""
         self.trainer.load_ensemble(filepath)
         self.is_trained = True
-        logger.info(f"Модель загружена из {filepath}")
+        logger.info(f"Model загружена from {filepath}")
 
 def create_price_prediction_system(
     input_features: int = 64,

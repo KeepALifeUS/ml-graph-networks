@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class GATConfig:
     """
-    Конфигурация для Graph Attention Network
+    Configuration for Graph Attention Network
     
     Declarative Configuration
     """
@@ -42,19 +42,19 @@ class GATConfig:
     hidden_dims: List[int] = None
     output_dim: int = 1
     num_layers: int = 3
-    num_heads: List[int] = None  # Количество attention heads на каждом слое
+    num_heads: List[int] = None  # Number attention heads on each слое
     dropout_rate: float = 0.2
-    attention_dropout: float = 0.1  # Dropout для attention weights
-    activation: str = 'elu'  # ELU лучше работает с GAT
+    attention_dropout: float = 0.1  # Dropout for attention weights
+    activation: str = 'elu'  # ELU лучше работает with GAT
     use_batch_norm: bool = True
     use_residual: bool = True
     use_edge_weights: bool = True
-    concat_heads: bool = True  # Concatenate или average attention heads
+    concat_heads: bool = True  # Concatenate or average attention heads
     use_gatv2: bool = False  # Использовать улучшенную версию GAT
-    negative_slope: float = 0.2  # Для LeakyReLU в attention
+    negative_slope: float = 0.2  # For LeakyReLU in attention
     learning_rate: float = 0.001
     weight_decay: float = 1e-5
-    attention_regularization: float = 1e-4  # L2 регуляризация attention
+    attention_regularization: float = 1e-4  # L2 regularization attention
     
     def __post_init__(self):
         if self.hidden_dims is None:
@@ -64,18 +64,18 @@ class GATConfig:
             ]
         
         if self.num_heads is None:
-            # Больше heads в начальных слоях, меньше в финальных
+            # Больше heads in начальных слоях, меньше in финальных
             self.num_heads = [8, 4, 2][:self.num_layers - 1] + [1]
             
-        # Проверка совместимости размерностей
+        # Check совместимости размерностей
         if len(self.num_heads) != self.num_layers:
-            raise ValueError("Количество heads должно соответствовать количеству слоев")
+            raise ValueError("Number heads должно соответствовать количеству layers")
 
 class MultiHeadAttention(nn.Module):
     """
-    Кастомный multi-head attention для криптоданных
+    Кастомный multi-head attention for криптоданных
     
-    Специально оптимизирован для временных рядов и корреляций между активами
+    Specifically optimized for time series and inter-asset correlations
     """
     
     def __init__(self, input_dim: int, num_heads: int, dropout: float = 0.1):
@@ -85,9 +85,9 @@ class MultiHeadAttention(nn.Module):
         self.head_dim = input_dim // num_heads
         
         if input_dim % num_heads != 0:
-            raise ValueError("input_dim должен быть кратен num_heads")
+            raise ValueError("input_dim should be divisible by num_heads")
         
-        # Linear projections для Q, K, V
+        # Linear projections for Q, K, V
         self.query_proj = nn.Linear(input_dim, input_dim)
         self.key_proj = nn.Linear(input_dim, input_dim)
         self.value_proj = nn.Linear(input_dim, input_dim)
@@ -95,7 +95,7 @@ class MultiHeadAttention(nn.Module):
         # Output projection
         self.output_proj = nn.Linear(input_dim, input_dim)
         
-        # Dropout и normalization
+        # Dropout and normalization
         self.attention_dropout = nn.Dropout(dropout)
         self.output_dropout = nn.Dropout(dropout)
         
@@ -105,14 +105,14 @@ class MultiHeadAttention(nn.Module):
         self._initialize_weights()
     
     def _initialize_weights(self):
-        """Xavier initialization для attention weights"""
+        """Xavier initialization for attention weights"""
         for module in [self.query_proj, self.key_proj, self.value_proj, self.output_proj]:
             nn.init.xavier_uniform_(module.weight)
             nn.init.zeros_(module.bias)
     
     def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """
-        Forward pass с возвратом attention weights для интерпретации
+        Forward pass with возвратом attention weights for интерпретации
         """
         batch_size, num_nodes, input_dim = x.size()
         
@@ -121,7 +121,7 @@ class MultiHeadAttention(nn.Module):
         K = self.key_proj(x)
         V = self.value_proj(x)
         
-        # Reshape для multi-head attention
+        # Reshape for multi-head attention
         Q = Q.view(batch_size, num_nodes, self.num_heads, self.head_dim).transpose(1, 2)
         K = K.view(batch_size, num_nodes, self.num_heads, self.head_dim).transpose(1, 2)
         V = V.view(batch_size, num_nodes, self.num_heads, self.head_dim).transpose(1, 2)
@@ -129,7 +129,7 @@ class MultiHeadAttention(nn.Module):
         # Scaled dot-product attention
         attention_scores = torch.matmul(Q, K.transpose(-2, -1)) / self.temperature
         
-        # Mask для учёта только связанных узлов (согласно edge_index)
+        # Mask for accounting only связанных nodes (согласно edge_index)
         if edge_index is not None:
             mask = self._create_attention_mask(edge_index, num_nodes, batch_size)
             attention_scores = attention_scores.masked_fill(mask == 0, -float('inf'))
@@ -149,26 +149,26 @@ class MultiHeadAttention(nn.Module):
         output = self.output_proj(attended_values)
         output = self.output_dropout(output)
         
-        return output, attention_weights.mean(dim=1)  # Усреднение по heads для визуализации
+        return output, attention_weights.mean(dim=1)  # Усреднение by heads for визуализации
     
     def _create_attention_mask(self, edge_index: torch.Tensor, num_nodes: int, batch_size: int) -> torch.Tensor:
-        """Создание маски для attention на основе edge_index"""
+        """Create masks for attention on основе edge_index"""
         mask = torch.zeros(batch_size, num_nodes, num_nodes, device=edge_index.device)
         
-        # Заполняем маску на основе рёбер графа
+        # Fill mask on основе edges graph
         for i in range(edge_index.size(1)):
             src, dst = edge_index[0, i], edge_index[1, i]
             mask[:, src, dst] = 1
-            mask[:, dst, src] = 1  # Симметричная маска для неориентированных графов
+            mask[:, dst, src] = 1  # Симметричная mask for неориентированных graphs
         
         # Self-attention всегда разрешён
         mask.fill_diagonal_(1)
         
-        return mask.unsqueeze(1)  # [batch, 1, nodes, nodes] для broadcasting
+        return mask.unsqueeze(1)  # [batch, 1, nodes, nodes] for broadcasting
 
 class GraphAttentionNetwork(nn.Module):
     """
-    Production-Ready Graph Attention Network для crypto trading
+    Production-Ready Graph Attention Network for crypto trading
     
     Scalable Deep Learning Architecture
     """
@@ -181,25 +181,25 @@ class GraphAttentionNetwork(nn.Module):
         self._build_layers()
         self._initialize_weights()
         
-        logger.info(f"Инициализирована GAT с {config.num_layers} слоями и {config.num_heads} головами")
+        logger.info(f"Инициализирована GAT with {config.num_layers} слоями and {config.num_heads} головами")
     
     def _validate_config(self) -> None:
-        """Валидация конфигурации"""
+        """Validation configuration"""
         if self.config.input_dim <= 0:
-            raise ValueError("input_dim должно быть положительным")
+            raise ValueError("input_dim должно be положительным")
         if self.config.output_dim <= 0:
-            raise ValueError("output_dim должно быть положительным")
+            raise ValueError("output_dim должно be положительным")
         if not 0.0 <= self.config.dropout_rate <= 1.0:
-            raise ValueError("dropout_rate должен быть в [0, 1]")
+            raise ValueError("dropout_rate should be in [0, 1]")
         if not 0.0 <= self.config.attention_dropout <= 1.0:
-            raise ValueError("attention_dropout должен быть в [0, 1]")
+            raise ValueError("attention_dropout should be in [0, 1]")
     
     def _build_layers(self) -> None:
-        """Построение GAT архитектуры"""
+        """Build GAT architecture"""
         self.attention_layers = nn.ModuleList()
         self.batch_norms = nn.ModuleList()
         
-        # Размерности с учётом concatenation heads
+        # Dimensions with учётом concatenation heads
         all_dims = [self.config.input_dim] + self.config.hidden_dims + [self.config.output_dim]
         
         for i in range(len(all_dims) - 1):
@@ -207,13 +207,13 @@ class GraphAttentionNetwork(nn.Module):
             in_dim = all_dims[i]
             out_dim = all_dims[i + 1]
             
-            # Выбор между GAT и GATv2
+            # Select between GAT and GATv2
             if self.config.use_gatv2:
                 gat_layer = GATv2Conv(
                     in_channels=in_dim,
                     out_channels=out_dim // num_heads if self.config.concat_heads else out_dim,
                     heads=num_heads,
-                    concat=self.config.concat_heads and i < len(all_dims) - 2,  # Последний слой не concat
+                    concat=self.config.concat_heads and i < len(all_dims) - 2,  # Last layer not concat
                     dropout=self.config.attention_dropout,
                     add_self_loops=True,
                     edge_dim=1 if self.config.use_edge_weights else None
@@ -237,7 +237,7 @@ class GraphAttentionNetwork(nn.Module):
                 effective_out_dim = out_dim if not self.config.concat_heads or i == len(all_dims) - 2 else out_dim * num_heads // num_heads
                 self.batch_norms.append(BatchNorm(out_dim))
         
-        # Regularization и activation
+        # Regularization and activation
         self.dropout = nn.Dropout(self.config.dropout_rate)
         self.activation = self._get_activation()
         
@@ -256,14 +256,14 @@ class GraphAttentionNetwork(nn.Module):
             nn.ELU(),
             nn.Dropout(self.config.dropout_rate * 0.5),
             nn.Linear(self.config.output_dim, 1),
-            nn.Tanh()  # Нормализация выхода для стабильности в crypto trading
+            nn.Tanh()  # Normalization выхода for стабильности in crypto trading
         )
         
         # Attention regularization
         self.attention_reg_loss = 0.0
     
     def _get_activation(self) -> nn.Module:
-        """Получение функции активации"""
+        """Get functions activation"""
         activations = {
             'relu': nn.ReLU(),
             'leaky_relu': nn.LeakyReLU(self.config.negative_slope),
@@ -274,16 +274,16 @@ class GraphAttentionNetwork(nn.Module):
         return activations.get(self.config.activation, nn.ELU())
     
     def _initialize_weights(self) -> None:
-        """Специализированная инициализация для GAT"""
+        """Specialized initialization for GAT"""
         for module in self.modules():
             if isinstance(module, nn.Linear):
                 if hasattr(module, 'weight'):
-                    # Xavier initialization для линейных слоёв
+                    # Xavier initialization for линейных слоёв
                     nn.init.xavier_uniform_(module.weight)
                 if hasattr(module, 'bias') and module.bias is not None:
                     nn.init.zeros_(module.bias)
             elif isinstance(module, (GATConv, GATv2Conv)):
-                # Специальная инициализация для attention layers
+                # Специальная initialization for attention layers
                 if hasattr(module, 'lin_l') and hasattr(module.lin_l, 'weight'):
                     nn.init.xavier_uniform_(module.lin_l.weight)
                 if hasattr(module, 'lin_r') and hasattr(module.lin_r, 'weight'):
@@ -291,7 +291,7 @@ class GraphAttentionNetwork(nn.Module):
     
     def forward(self, data: Data) -> Tuple[torch.Tensor, List[torch.Tensor]]:
         """
-        Forward pass с возвратом attention weights
+        Forward pass with возвратом attention weights
         
         Returns:
             Tuple[torch.Tensor, List[torch.Tensor]]: (predictions, attention_weights)
@@ -303,9 +303,9 @@ class GraphAttentionNetwork(nn.Module):
         attention_weights = []
         residual_x = x if self.config.use_residual else None
         
-        # Проход через attention layers
+        # Проход through attention layers
         for i, gat_layer in enumerate(self.attention_layers[:-1]):
-            # GAT forward pass с attention weights
+            # GAT forward pass with attention weights
             if isinstance(gat_layer, (GATConv, GATv2Conv)):
                 x_new, (edge_index_att, att_weights) = gat_layer(
                     x, edge_index, edge_attr=edge_weight, return_attention_weights=True
@@ -331,7 +331,7 @@ class GraphAttentionNetwork(nn.Module):
             # Dropout
             x = self.dropout(x)
         
-        # Последний attention слой
+        # Last attention layer
         final_layer = self.attention_layers[-1]
         if isinstance(final_layer, (GATConv, GATv2Conv)):
             x, (_, final_att_weights) = final_layer(
@@ -347,7 +347,7 @@ class GraphAttentionNetwork(nn.Module):
         
         # Graph-level aggregation
         if batch is not None:
-            # Weighted pooling для каждого графа в батче
+            # Weighted pooling for each graph in батче
             graph_features = []
             for i in range(batch.max().item() + 1):
                 mask = (batch == i)
@@ -364,7 +364,7 @@ class GraphAttentionNetwork(nn.Module):
             x = torch.sum(x_weighted * node_attention, dim=0) / torch.sum(node_attention)
             x = x.unsqueeze(0)
         
-        # Финальное предсказание
+        # Финальное prediction
         output = self.output_layer(x)
         
         # Attention regularization loss
@@ -373,29 +373,29 @@ class GraphAttentionNetwork(nn.Module):
         return output, attention_weights
     
     def _compute_attention_regularization(self, attention_weights: List[torch.Tensor]) -> None:
-        """Вычисление regularization loss для attention weights"""
+        """Computation regularization loss for attention weights"""
         if not attention_weights:
             self.attention_reg_loss = 0.0
             return
         
         reg_loss = 0.0
         for att_weights in attention_weights:
-            # L2 regularization для attention weights
+            # L2 regularization for attention weights
             reg_loss += torch.sum(att_weights ** 2)
         
         self.attention_reg_loss = self.config.attention_regularization * reg_loss
     
     def get_attention_weights(self, data: Data) -> List[torch.Tensor]:
-        """Получение attention weights для интерпретации"""
+        """Get attention weights for интерпретации"""
         _, attention_weights = self.forward(data)
         return attention_weights
     
     def get_node_embeddings(self, data: Data, layer_idx: int = -2) -> torch.Tensor:
-        """Получение node embeddings из указанного слоя"""
+        """Get node embeddings from указанного layers"""
         x, edge_index = data.x, data.edge_index
         edge_weight = getattr(data, 'edge_weight', None) if self.config.use_edge_weights else None
         
-        # Проход до указанного слоя
+        # Проход up to указанного layers
         for i in range(min(len(self.attention_layers), layer_idx + 1)):
             layer = self.attention_layers[i]
             if isinstance(layer, (GATConv, GATv2Conv)):
@@ -413,7 +413,7 @@ class GraphAttentionNetwork(nn.Module):
 
 class CryptoGATTrainer:
     """
-    Специализированный тренер для GAT модели в crypto trading
+    Specialized тренер for GAT model in crypto trading
     
     Production Training Pipeline
     """
@@ -423,30 +423,30 @@ class CryptoGATTrainer:
         self.config = config
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         
-        # Оптимизатор с attention-specific настройками
+        # Оптимизатор with attention-specific настройками
         self.optimizer = torch.optim.AdamW(
             model.parameters(),
             lr=config.learning_rate,
             weight_decay=config.weight_decay,
-            betas=(0.9, 0.999),  # Оптимально для attention models
+            betas=(0.9, 0.999),  # Оптимально for attention models
             eps=1e-8
         )
         
-        # Scheduler с warm-up для attention models
+        # Scheduler with warm-up for attention models
         self.scheduler = self._create_scheduler()
         
         self.model.to(self.device)
         
-        # Метрики и история
+        # Metrics and история
         self.history = {
             'train_loss': [], 'val_loss': [], 'train_mae': [], 'val_mae': [],
             'attention_reg_loss': [], 'learning_rates': []
         }
         
-        logger.info(f"GAT тренер готов на устройстве: {self.device}")
+        logger.info(f"GAT тренер готов on устройстве: {self.device}")
     
     def _create_scheduler(self):
-        """Создание scheduler с warm-up"""
+        """Create scheduler with warm-up"""
         def lr_lambda(current_step):
             warmup_steps = 100
             if current_step < warmup_steps:
@@ -456,7 +456,7 @@ class CryptoGATTrainer:
         return torch.optim.lr_scheduler.LambdaLR(self.optimizer, lr_lambda)
     
     def train_step(self, batch: Data) -> Dict[str, float]:
-        """Шаг обучения с attention regularization"""
+        """Шаг training with attention regularization"""
         self.model.train()
         self.optimizer.zero_grad()
         
@@ -470,13 +470,13 @@ class CryptoGATTrainer:
         mse_loss = F.mse_loss(predictions, targets)
         mae_loss = F.l1_loss(predictions, targets)
         
-        # Total loss с attention regularization
+        # Total loss with attention regularization
         total_loss = mse_loss + self.model.attention_reg_loss
         
         # Backward pass
         total_loss.backward()
         
-        # Gradient clipping для attention models
+        # Gradient clipping for attention models
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=2.0)
         
         self.optimizer.step()
@@ -489,7 +489,7 @@ class CryptoGATTrainer:
         }
     
     def validate_step(self, batch: Data) -> Dict[str, float]:
-        """Валидация с анализом attention patterns"""
+        """Validation with анализом attention patterns"""
         self.model.eval()
         batch = batch.to(self.device)
         
@@ -500,7 +500,7 @@ class CryptoGATTrainer:
             mse_loss = F.mse_loss(predictions, targets)
             mae_loss = F.l1_loss(predictions, targets)
             
-            # Анализ attention entropy (разнообразие attention)
+            # Анализ attention entropy (diversity attention)
             attention_entropy = 0.0
             if attention_weights:
                 for att_weights in attention_weights:
@@ -517,7 +517,7 @@ class CryptoGATTrainer:
         }
     
     def train_epoch(self, train_loader, val_loader=None) -> Dict[str, float]:
-        """Обучение эпохи с attention analysis"""
+        """Training epochs with attention analysis"""
         train_metrics = {'loss': [], 'mae': [], 'attention_reg': []}
         
         for batch in train_loader:
@@ -528,7 +528,7 @@ class CryptoGATTrainer:
         
         epoch_metrics = {f'train_{k}': np.mean(v) for k, v in train_metrics.items()}
         
-        # Валидация
+        # Validation
         if val_loader:
             val_metrics = {'loss': [], 'mae': [], 'attention_entropy': []}
             
@@ -540,12 +540,12 @@ class CryptoGATTrainer:
             
             epoch_metrics.update({f'val_{k}': np.mean(v) for k, v in val_metrics.items()})
         
-        # Обновление learning rate
+        # Update learning rate
         self.scheduler.step()
         current_lr = self.optimizer.param_groups[0]['lr']
         epoch_metrics['learning_rate'] = current_lr
         
-        # Сохранение в историю
+        # Save in историю
         for key, value in epoch_metrics.items():
             if key in self.history:
                 self.history[key].append(value)
@@ -553,7 +553,7 @@ class CryptoGATTrainer:
         return epoch_metrics
     
     def predict_with_attention(self, data: Union[Data, List[Data]]) -> Tuple[np.ndarray, List[np.ndarray]]:
-        """Предсказание с attention weights"""
+        """Prediction with attention weights"""
         self.model.eval()
         
         if isinstance(data, list):
@@ -566,7 +566,7 @@ class CryptoGATTrainer:
         with torch.no_grad():
             predictions, attention_weights = self.model(batch)
         
-        # Конвертация attention weights в numpy
+        # Convert attention weights in numpy
         attention_np = []
         for att_weights in attention_weights:
             attention_np.append(att_weights.cpu().numpy())
@@ -574,7 +574,7 @@ class CryptoGATTrainer:
         return predictions.cpu().numpy(), attention_np
     
     def save_model(self, filepath: str) -> None:
-        """Сохранение GAT модели с attention weights"""
+        """Save GAT model with attention weights"""
         torch.save({
             'model_state_dict': self.model.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
@@ -582,7 +582,7 @@ class CryptoGATTrainer:
             'config': self.config,
             'history': self.history
         }, filepath)
-        logger.info(f"GAT модель сохранена в {filepath}")
+        logger.info(f"GAT model сохранена in {filepath}")
 
 def create_crypto_gat_model(
     input_dim: int,
@@ -592,9 +592,9 @@ def create_crypto_gat_model(
     **kwargs
 ) -> Tuple[GraphAttentionNetwork, CryptoGATTrainer]:
     """
-    Factory функция для создания GAT модели
+    Factory function for creation GAT model
     
-    Factory Pattern для ML Models
+    Factory Pattern for ML Models
     """
     config = GATConfig(
         input_dim=input_dim,
@@ -609,7 +609,7 @@ def create_crypto_gat_model(
     
     return model, trainer
 
-# Экспорт для использования
+# Экспорт for use
 __all__ = [
     'GraphAttentionNetwork',
     'GATConfig', 
