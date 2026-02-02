@@ -3,11 +3,11 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ctb3-ml-graph-networks"
+name = "ml-graph-networks"
 version = "1.0.0"
 description = "Enterprise Graph Neural Networks for Crypto Trading Bot v5.0"
 authors = [
-    {name = "CTB3 ML Team", email = "ml@ctb3.dev"}
+    {name = "ML Team", email = "ml@example.com"}
 ]
 readme = "README.md"
 license = {text = "MIT"}
@@ -75,10 +75,10 @@ visualization = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/ctb3/crypto-trading-bot"
-Repository = "https://github.com/ctb3/crypto-trading-bot.git"
-Issues = "https://github.com/ctb3/crypto-trading-bot/issues"
-Documentation = "https://docs.ctb3.dev/ml-graph-networks"
+Homepage = "https://github.com/KeepALifeUS"
+Repository = "https://github.com/KeepALifeUS"
+Issues = "https://github.com/KeepALifeUS"
+Documentation = "https://example.com"
 
 [tool.setuptools.packages.find]
 where = ["src"]
