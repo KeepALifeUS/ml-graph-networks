@@ -3,7 +3,7 @@ Message Passing Neural Network (MPNN) Implementation for Crypto Trading
 ========================================================================
 
 Enterprise-grade MPNN with customizable message and update functions
-optimized for crypto market dynamics with Context7 cloud-native patterns.
+optimized for crypto market dynamics with cloud-native patterns.
 
 Features:
 - Custom message and update functions
@@ -39,7 +39,7 @@ class MPNNConfig:
     """
     Конфигурация для Message Passing Neural Network
     
-    Context7 Pattern: Comprehensive Configuration Management
+    Comprehensive Configuration Management
     """
     node_input_dim: int = 64
     edge_input_dim: int = 32
@@ -91,7 +91,7 @@ class MessageFunction(nn.Module, ABC):
     """
     Абстрактный базовый класс для message functions
     
-    Context7 Pattern: Strategy Pattern для message passing
+    Strategy Pattern для message passing
     """
     
     @abstractmethod
@@ -311,7 +311,7 @@ class MPNNLayer(MessagePassing):
     """
     Один слой Message Passing Neural Network
     
-    Context7 Pattern: Composable Neural Network Layers
+    Composable Neural Network Layers
     """
     
     def __init__(self, config: MPNNConfig):
@@ -446,7 +446,7 @@ class ReadoutFunction(nn.Module):
     """
     Readout function для получения graph-level представления
     
-    Context7 Pattern: Flexible Aggregation Strategies
+    Flexible Aggregation Strategies
     """
     
     def __init__(self, config: MPNNConfig):
@@ -574,7 +574,7 @@ class MessagePassingNeuralNetwork(nn.Module):
     """
     Complete Message Passing Neural Network для crypto trading
     
-    Context7 Pattern: Enterprise Deep Learning Architecture
+    Enterprise Deep Learning Architecture
     """
     
     def __init__(self, config: MPNNConfig):
@@ -709,7 +709,7 @@ class CryptoMPNNTrainer:
     """
     Специализированный тренер для MPNN в crypto trading
     
-    Context7 Pattern: Production Training Infrastructure
+    Production Training Infrastructure
     """
     
     def __init__(self, model: MessagePassingNeuralNetwork, config: MPNNConfig):
@@ -870,7 +870,7 @@ def create_crypto_mpnn_model(
     """
     Factory функция для создания MPNN модели
     
-    Context7 Pattern: Factory with Dependency Injection
+    Factory with Dependency Injection
     """
     config = MPNNConfig(
         node_input_dim=node_input_dim,

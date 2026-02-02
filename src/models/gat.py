@@ -3,7 +3,7 @@ Graph Attention Network (GAT) Implementation for Crypto Trading
 ================================================================
 
 Enterprise-grade GAT implementation with multi-head attention mechanism
-optimized for crypto market relationship modeling with Context7 patterns.
+optimized for crypto market relationship modeling with enterprise patterns.
 
 Features:
 - Multi-head attention mechanisms
@@ -36,7 +36,7 @@ class GATConfig:
     """
     Конфигурация для Graph Attention Network
     
-    Context7 Pattern: Declarative Configuration
+    Declarative Configuration
     """
     input_dim: int = 64
     hidden_dims: List[int] = None
@@ -170,7 +170,7 @@ class GraphAttentionNetwork(nn.Module):
     """
     Production-Ready Graph Attention Network для crypto trading
     
-    Context7 Pattern: Scalable Deep Learning Architecture
+    Scalable Deep Learning Architecture
     """
     
     def __init__(self, config: GATConfig):
@@ -415,7 +415,7 @@ class CryptoGATTrainer:
     """
     Специализированный тренер для GAT модели в crypto trading
     
-    Context7 Pattern: Production Training Pipeline
+    Production Training Pipeline
     """
     
     def __init__(self, model: GraphAttentionNetwork, config: GATConfig):
@@ -594,7 +594,7 @@ def create_crypto_gat_model(
     """
     Factory функция для создания GAT модели
     
-    Context7 Pattern: Factory Pattern для ML Models
+    Factory Pattern для ML Models
     """
     config = GATConfig(
         input_dim=input_dim,

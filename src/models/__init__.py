@@ -12,7 +12,7 @@ Available Models:
 - MPNN: Message Passing Neural Network with customizable functions
 - Ensemble: Multi-model ensemble system with uncertainty quantification
 
-All models follow Context7 cloud-native patterns for production deployment.
+All models follow cloud-native patterns for production deployment.
 
 Author: ML-Framework ML Team
 Version: 1.0.0

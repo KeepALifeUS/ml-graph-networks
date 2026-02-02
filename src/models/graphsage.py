@@ -3,7 +3,7 @@ GraphSAGE Implementation for Crypto Trading
 ============================================
 
 Production-ready GraphSAGE with advanced sampling strategies 
-optimized for large-scale crypto market graphs with Context7 patterns.
+optimized for large-scale crypto market graphs with enterprise patterns.
 
 Features:
 - Inductive learning capabilities
@@ -39,7 +39,7 @@ class GraphSAGEConfig:
     """
     Конфигурация для GraphSAGE модели
     
-    Context7 Pattern: Configuration Management
+    Configuration Management
     """
     input_dim: int = 64
     hidden_dims: List[int] = None  
@@ -83,7 +83,7 @@ class AdvancedSampler:
     """
     Продвинутый sampler для GraphSAGE с различными стратегиями
     
-    Context7 Pattern: Strategy Pattern для sampling
+    Strategy Pattern для sampling
     """
     
     def __init__(self, config: GraphSAGEConfig):
@@ -331,7 +331,7 @@ class CryptoAggregator(nn.Module):
     """
     Кастомный aggregator для криптоданных
     
-    Context7 Pattern: Domain-Specific Aggregation
+    Domain-Specific Aggregation
     """
     
     def __init__(self, input_dim: int, aggregation_type: str = 'mean', use_attention: bool = False):
@@ -422,7 +422,7 @@ class GraphSAGE(nn.Module):
     """
     Production-Ready GraphSAGE для crypto trading
     
-    Context7 Pattern: Scalable Graph Learning Architecture
+    Scalable Graph Learning Architecture
     """
     
     def __init__(self, config: GraphSAGEConfig):
@@ -610,7 +610,7 @@ class CryptoGraphSAGETrainer:
     """
     Специализированный тренер для GraphSAGE в crypto trading
     
-    Context7 Pattern: Scalable Training Pipeline
+    Scalable Training Pipeline
     """
     
     def __init__(self, model: GraphSAGE, config: GraphSAGEConfig):
@@ -769,7 +769,7 @@ def create_crypto_graphsage_model(
     """
     Factory функция для создания GraphSAGE модели
     
-    Context7 Pattern: Factory Pattern with Configuration Injection
+    Factory Pattern with Configuration Injection
     """
     config = GraphSAGEConfig(
         input_dim=input_dim,

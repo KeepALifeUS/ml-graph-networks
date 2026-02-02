@@ -15,7 +15,7 @@ keywords = [
     "graph-neural-networks", 
     "crypto-trading", 
     "pytorch-geometric", 
-    "context7-patterns",
+    
     "enterprise-ml"
 ]
 classifiers = [

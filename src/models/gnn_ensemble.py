@@ -3,7 +3,7 @@ GNN Ensemble System for Crypto Trading
 =======================================
 
 Enterprise-grade ensemble of Graph Neural Networks combining GCN, GAT, 
-GraphSAGE, and MPNN for robust crypto market predictions with Context7 patterns.
+GraphSAGE, and MPNN for robust crypto market predictions with enterprise patterns.
 
 Features:
 - Multi-model ensemble architecture
@@ -44,7 +44,7 @@ class EnsembleConfig:
     """
     Конфигурация для GNN Ensemble
     
-    Context7 Pattern: Comprehensive Ensemble Configuration
+    Comprehensive Ensemble Configuration
     """
     # Model configurations
     gcn_config: Optional[GCNConfig] = None
@@ -95,7 +95,7 @@ class ModelPerformanceTracker:
     """
     Трекер производительности отдельных моделей для адаптивных весов
     
-    Context7 Pattern: Real-time Performance Analytics
+    Real-time Performance Analytics
     """
     
     def __init__(self, window_size: int = 50):
@@ -181,7 +181,7 @@ class UncertaintyQuantifier:
     """
     Модуль для квантификации неопределённости в ensemble predictions
     
-    Context7 Pattern: Risk Assessment and Uncertainty Management
+    Risk Assessment and Uncertainty Management
     """
     
     def __init__(self, method: str = 'ensemble_variance'):
@@ -281,7 +281,7 @@ class GraphNeuralNetworkEnsemble(nn.Module):
     """
     Production-Ready GNN Ensemble для crypto trading
     
-    Context7 Pattern: Scalable Ensemble Learning Architecture
+    Scalable Ensemble Learning Architecture
     """
     
     def __init__(self, config: EnsembleConfig):
@@ -553,7 +553,7 @@ class CryptoGNNEnsembleTrainer:
     """
     Специализированный тренер для GNN Ensemble
     
-    Context7 Pattern: Enterprise Ensemble Training Pipeline
+    Enterprise Ensemble Training Pipeline
     """
     
     def __init__(self, ensemble: GraphNeuralNetworkEnsemble, config: EnsembleConfig):
@@ -787,7 +787,7 @@ def create_crypto_gnn_ensemble(
     """
     Factory функция для создания GNN Ensemble
     
-    Context7 Pattern: Factory with Full Configuration
+    Factory with Full Configuration
     """
     # Создание конфигураций для каждой модели
     model_configs = {}

@@ -3,7 +3,7 @@ Price Prediction Application using Graph Neural Networks
 =========================================================
 
 Production-ready price prediction system using GNN ensemble for 
-cryptocurrency market forecasting with Context7 patterns.
+cryptocurrency market forecasting with enterprise patterns.
 
 Features:
 - Multi-step price forecasting
@@ -64,7 +64,7 @@ class CryptoPricePredictor:
     """
     Main class for crypto price prediction using GNN ensemble
     
-    Context7 Pattern: Production ML Pipeline
+    Production ML Pipeline
     """
     
     def __init__(self, config: PricePredictionConfig):
@@ -403,7 +403,7 @@ def create_price_prediction_system(
     """
     Factory function for creating price prediction system
     
-    Context7 Pattern: Factory for ML Applications
+    Factory for ML Applications
     """
     config = PricePredictionConfig(
         input_features=input_features,

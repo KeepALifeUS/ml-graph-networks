@@ -3,7 +3,7 @@ ML Graph Networks Package for Crypto Trading Bot v5.0
 ======================================================
 
 Enterprise Graph Neural Networks implementation for cryptocurrency 
-market analysis and trading with Context7 cloud-native patterns.
+market analysis and trading with cloud-native patterns.
 
 This package provides:
 - GCN, GAT, GraphSAGE, MPNN implementations
@@ -13,7 +13,7 @@ This package provides:
 - Real-time price prediction applications
 
 Key Features:
-- Context7 enterprise patterns for production deployment
+- enterprise patterns for production deployment
 - Scalable graph processing for large crypto datasets
 - Advanced sampling strategies for memory efficiency
 - Uncertainty quantification for risk management

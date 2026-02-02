@@ -11,7 +11,7 @@ Features:
 - Market regime-aware correlation graphs
 - Volatility-adjusted correlations
 - Cross-asset correlation networks
-- Production-ready scalability with Context7 patterns
+- Production-ready scalability with enterprise patterns
 
 Author: ML-Framework ML Team
 Version: 1.0.0
@@ -39,7 +39,7 @@ class CorrelationGraphConfig:
     """
     Конфигурация для построения correlation-based графов
     
-    Context7 Pattern: Comprehensive Configuration Management
+    Comprehensive Configuration Management
     """
     # Correlation parameters
     correlation_method: str = 'pearson'  # pearson, spearman, kendall, distance_correlation
@@ -76,7 +76,7 @@ class CorrelationCalculator:
     """
     Вычислитель различных типов корреляций для crypto assets
     
-    Context7 Pattern: Strategy Pattern для correlation methods
+    Strategy Pattern для correlation methods
     """
     
     def __init__(self, method: str = 'pearson'):
@@ -264,7 +264,7 @@ class MarketRegimeDetector:
     """
     Детектор рыночных режимов для адаптивных корреляций
     
-    Context7 Pattern: Market Intelligence Module
+    Market Intelligence Module
     """
     
     def __init__(self, volatility_threshold: float = 0.02, window: int = 10):
@@ -322,7 +322,7 @@ class CorrelationGraphBuilder:
     """
     Основной класс для построения correlation-based графов
     
-    Context7 Pattern: Builder Pattern для graph construction
+    Builder Pattern для graph construction
     """
     
     def __init__(self, config: CorrelationGraphConfig):
@@ -723,7 +723,7 @@ def create_correlation_graph(
     """
     Factory функция для быстрого создания корреляционного графа
     
-    Context7 Pattern: Simple Factory для graph creation
+    Simple Factory для graph creation
     """
     config = CorrelationGraphConfig(
         correlation_method=correlation_method,

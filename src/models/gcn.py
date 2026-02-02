@@ -3,7 +3,7 @@ Graph Convolutional Network (GCN) Implementation for Crypto Trading
 ==================================================================
 
 Enterprise-grade GCN implementation optimized for crypto market analysis
-with Context7 cloud-native patterns and production-ready features.
+with cloud-native patterns and production-ready features.
 
 Features:
 - Spectral and spatial graph convolutions
@@ -37,7 +37,7 @@ class GCNConfig:
     """
     Конфигурация для Graph Convolutional Network
     
-    Context7 Pattern: Configuration as Code
+    Configuration as Code
     """
     input_dim: int = 64  # Размерность входных признаков
     hidden_dims: List[int] = None  # Размерности скрытых слоев
@@ -64,7 +64,7 @@ class GraphConvolutionalNetwork(nn.Module):
     Production-Ready Graph Convolutional Network
     
     Реализует многослойную GCN с современными техниками регуляризации
-    и Context7 enterprise patterns для crypto trading.
+    и enterprise patterns для crypto trading.
     """
     
     def __init__(self, config: GCNConfig):
@@ -235,7 +235,7 @@ class CryptoGCNTrainer:
     """
     Тренер для GCN модели с криптоспецифичными оптимизациями
     
-    Context7 Pattern: Enterprise Training Pipeline
+    Enterprise Training Pipeline
     """
     
     def __init__(self, model: GraphConvolutionalNetwork, config: GCNConfig):

@@ -3,7 +3,7 @@ Custom Graph Neural Network Layers for Crypto Trading
 ======================================================
 
 Enterprise-grade custom GNN layers optimized for cryptocurrency 
-market analysis with Context7 production patterns.
+market analysis with  production patterns.
 
 Features:
 - Temporal graph convolution layers
@@ -28,7 +28,7 @@ class TemporalGraphConv(MessagePassing):
     """
     Temporal Graph Convolution Layer для временных рядов crypto данных
     
-    Context7 Pattern: Temporal-Aware Graph Processing
+    Temporal-Aware Graph Processing
     """
     
     def __init__(self, in_channels: int, out_channels: int, temporal_window: int = 3):
@@ -78,7 +78,7 @@ class CryptoAttentionLayer(nn.Module):
     """
     Специализированный attention layer для crypto asset relationships
     
-    Context7 Pattern: Domain-Specific Attention Mechanisms
+    Domain-Specific Attention Mechanisms
     """
     
     def __init__(self, input_dim: int, hidden_dim: int, num_heads: int = 4):
@@ -134,7 +134,7 @@ class DynamicEdgeWeightLearner(nn.Module):
     """
     Learnable edge weights для адаптивных graph relationships
     
-    Context7 Pattern: Adaptive Graph Structure Learning
+    Adaptive Graph Structure Learning
     """
     
     def __init__(self, node_dim: int, edge_dim: int = 32):
