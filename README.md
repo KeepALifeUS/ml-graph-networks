@@ -344,3 +344,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 ---
 
 **Built with ❤️ by ML-Framework ML Team | Built with enterprise patterns**
+
+## Support
+
+For questions and support, please open an issue on GitHub.
